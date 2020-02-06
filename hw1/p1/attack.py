@@ -33,7 +33,7 @@ def gen_datasizes(r, step):
 #############################################################################
 
 def releasing_dataset(dataset):
-	return [sum(dataset[:i]) + random.randint(0,1) for i in range(len(dataset))]
+	return [sum(dataset[:(i + 1)]) + random.randint(0,1) for i in range(len(dataset))]
 
 def releasing_datasets(datasets):
 	return [releasing_dataset(d) for d in datasets]
@@ -44,7 +44,15 @@ def releasing_datasets(datasets):
 #############################################################################
 def attack_no_aux(observation):
 	observation = [0] + observation
-	return [observation[i] - observation[i - 1] for i in range(1, len(observation))]
+	att = []
+	for i in range(1, len(observation)):
+		r = (observation[i] - observation[i - 1])
+		if r < 0:
+			r = 0
+		elif r > 1:
+			r = 1
+		att.append(r)
+	return att
 
 
 def attacks_no_aux(observations):
@@ -55,30 +63,31 @@ def attacks_no_aux(observations):
 #ATTACK WITH AUXILLARY INFORMATION AND THE OBSERVATION OF ONE DATABASE
 #############################################################################
 def attack_with_aux(observation):
-	return
+
+	return attack_no_aux(observation), w
 
 def accuracy(att, data):
+	# print att
 	return sum([1 if att[i] == data[i] else 0 for i in range(len(att))])/ (len(att)*1.0)
 
 
 def accuracys(atts, datas):
 	return [accuracy(atts[i], datas[i]) for i in range(len(atts))]
 
-def plot_accuracy(labels):
+def plot_accuracy(ys, ns):
 	
 	#############################################################################
 	#PLOT the prob within the same bin
 	#############################################################################
 
 	plt.figure()
-	colors = ["b","r","g"]
+	# colors = ["b","r","g"]
 
-	for i in range(len(filenames)):
-		plt.plot(steps[-100:], probabilities_by_steps[i][-100:], colors[i], label=(labels[i]))
+	plt.plot(ns, ys)
 		# plt.plot(T, approximate_bounds, 'g^', label=('Expmech_SS zApproximate Bound'))
-	plt.xlabel("c / (steps from correct answer, in form of Hellinger Distance)")
-	plt.ylabel("Pr[H(BI(x),r) = c]")
-	plt.title("Discrete Probabilities")
+	plt.xlabel("n / size of the database")
+	plt.ylabel("accuracy / fraction of the bits recovered")
+	plt.title("Linear Attack")
 	plt.legend()
 	plt.grid()
 	plt.show()
@@ -93,11 +102,14 @@ if __name__ == "__main__":
 	#SETTING UP THE PARAMETERS WHEN DOING GROUPS EXPERIMENTS
 	#############################################################################
 	
-	datasizes = [100, 500, 1000] #[100, 500, 1000, 5000] #gen_datasizes((50,600),50)
+	datasizes = gen_datasizes((100,1000),20) + gen_datasizes((1000,5000),100) # [100, 200, 300] #[100, 500, 1000, 5000] #gen_datasizes((50,600),50)
 	datasets = gen_datasets(datasizes)
 	obs = releasing_datasets(datasets)
+	# print datasets
+	# print obs
 	atts = attacks_no_aux(obs)
-	print accuracys(obs, datasets)
+	acs = accuracys(atts, datasets)
+	plot_accuracy(acs, datasizes)
 	# print datasets
 
 
