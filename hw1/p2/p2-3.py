@@ -22,50 +22,49 @@ def gen_datasizes(r, step):
 	return [i*step for i in range(r[0]/step,r[1]/step + 1)]
 
 def gen_cfft(d):
-	return np.array([random.choice([-1/sqrt(d), 1/sqrt(d)]) for _ in range(d)])
+	return np.array([random.choice([-1/math.sqrt(d), 1/math.sqrt(d)]) for _ in range(d)])
+
+
+
+def gen_label(data, c, sigma):
+	return np.dot(c, data.transpose()) + np.array([random.gauss(0, sigma) for _ in data]) 
+
 #############################################################################
 #RELEASING THE NOIZED VERSION OF QUERY
 #############################################################################
 
-def F_test(A, X):
-	return np.dot(A, X.transpose())
 
+def LSLR(data, label):
+	return np.linalg.lstsq(data, label)[0]
 
+def classifier(w, target):
+	return 1.0 if abs(np.dot(w, target[0].transpose()) - target[1]) < 0.01 else 0.0
 
-def query_avg(data):
-	return np.array(map(sum, data.transpose()))/(len(data)*1.0)
-
-def gaussi_mech(query, sigma, data):
-	return query(data) + np.array([random.gauss(0, sigma) for _ in data[0]]) 
-
-def rounding_mech(query, sigma, data):
-	return np.array(map(round, query(data)/sigma)) * sigma
-#############################################################################
-#ATTACK WITH ONLY THE KNOWLEDGE OF THE OBSERVATION OF ONE DATABASE
-#############################################################################
-
-def scores(A, data):
-	return F_test(A, data)
+def scores(w, pos_targets, neg_targets):
+	return [classifier(w, p) for p in pos_targets], [classifier(w, p) for p in neg_targets]
 
 #############################################################################
 #ATTACK2 WITH ONLY THE KNOWLEDGE OF THE OBSERVATION OF ONE DATABASE
 #############################################################################
 
 def true_positive(sc1, sc2):
+	return sum(sc1) / (len(sc1))
 
-	return sum(map(lambda s: 1.0 if s*1.0/len(sc1) > 0.95 else 0, 
-		[sum(map(lambda s2: 1.0 if s1 > s2 else 0, sc2)) for s1 in sc1])) / len(sc1)
+def false_negtive(sc1, sc2):
+	return 1.0 - sum(sc1) / (len(sc1))
+
+def true_negtive(sc1, sc2):
+	return sum(sc2) / (len(sc2))
+
+def false_positive(sc1, sc2):
+	return 1.0 - sum(sc2) / (len(sc2))
 
 
 def exprmt(d, n, sigma):
-	p, k = 0.0, 1
-	for i in range(k):
-		data, out_data = gen_data(d, n), gen_data(d, n)
-		A = gaussi_mech(query_avg, sigma, data)
-		s_in, s_out = scores(A, data), scores(A, out_data)
-		p += true_positive(s_in, s_out)
-
-	return p/k
+	data, coefft, neg_data = gen_data(d, n), gen_cfft(d), gen_data(d, n)
+	y, neg_y = gen_label(data, coefft, sigma), gen_label(neg_data, coefft, sigma)
+	score = scores(LSLR(data, y), zip(data, y), zip(neg_data, neg_y))
+	return true_positive(score[0], score[1]), true_negtive(score[0], score[1])
 
 
 def exprmt_n(n_list, d, sigma):
@@ -76,10 +75,10 @@ def exprmt_d(n, d_list, sigma):
 
 def plot_accuracy(ys, ns):
 	plt.figure()
-	plt.plot(ns, ys, "ro-")
+	plt.plot(ns, [y[0] for y in ys], "ro-", label = "true positive rate")
+	plt.plot(ns, [y[1] for y in ys], "bo-", label = "true negtive rate")
 	plt.xlabel("d / dimension of the database (# of attributes)")
-	plt.ylabel("true positive rate")
-	# plt.title("Linear Attack")
+	plt.ylabel("accuracy rate")
 	plt.legend()
 	plt.grid()
 	plt.show()
@@ -91,13 +90,8 @@ if __name__ == "__main__":
 	#############################################################################
 	#SETTING UP THE PARAMETERS WHEN DOING GROUPS EXPERIMENTS
 	#############################################################################
-	d_list = [100, 200, 400, 800, 2000, 5000]
-	tp = exprmt_d(100, d_list, 1/3.0)
+	d_list = [100, 200, 400, 800, 2000, 3000, 5000]
+	tp = exprmt_d(100, d_list, 0.1)
 	plot_accuracy(tp, d_list)
 
-
-
-
-
-	
 
