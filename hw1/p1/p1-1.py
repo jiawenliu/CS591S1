@@ -39,11 +39,8 @@ def releasing_dataset(query, dataset):
 #ATTACK WITH ONLY THE KNOWLEDGE OF THE OBSERVATION OF ONE DATABASE
 #############################################################################
 def attack_no_aux(observation):
-	n = len(observation)
 	s = [observation[0]] + list((observation[1:] - observation[: -1]))
-	# print s
-	att = np.array([[0] if r < 0 else [1] if r > 1 else r for r in s] ).reshape(n, 1)
-	return att
+	return np.array([[0] if r < 0 else [1] if r > 1 else r for r in s] ).reshape(len(observation), 1)
 
 
 #############################################################################
@@ -114,26 +111,21 @@ def accuracy(att, data):
 # 	atts = attacks_no_aux(obs)
 # 	return accuracys(atts, datasets)
 
-def testing_kround(n, k):
+def exprmt_k(n, k):
 	acc = 0.0
 	for i in range(k):
-		dataset = gen_dataset(n)
-		# print dataset
-		q = gen_query(n)
-		obs = releasing_dataset(q, dataset)
-		att = attack_no_aux(obs)
-		acc += accuracy(att, dataset)
+		dataset, q = gen_dataset(n), gen_query(n)
+		acc += accuracy(attack_no_aux(releasing_dataset(q, dataset)), dataset)
 	return acc/k
 
 
-def testing_kround_ksize(ns, k):
-	return [testing_kround(n, k) for n in ns]
+def exprmt_k_ns(ns, k):
+	return [exprmt_k(n, k) for n in ns]
 
 def plot_accuracy(ys, ns):
 	plt.figure()
 	plt.plot(ns, ys, "ro-", label = "Accuracy.")
-	mean = sum(ys) / len(ys)
-	plt.plot(ns, [mean]*len(ys), "b-", label = "Average Acc.", linewidth = 3.0)
+	plt.plot(ns, [sum(ys) / len(ys)]*len(ys), "b-", label = "Average Acc.", linewidth = 3.0)
 	plt.xlabel("n / size of the database")
 	plt.ylabel("accuracy / fraction of the bits recovered")
 	plt.title("Linear Attack")
@@ -149,11 +141,8 @@ if __name__ == "__main__":
 	#SETTING UP THE PARAMETERS WHEN DOING GROUPS EXPERIMENTS
 	#############################################################################
 	
-	datasizes = gen_datasizes((100, 900),100)  + gen_datasizes((1000,5000), 200) + [50000] # [100, 200, 300] #[100, 500, 1000, 5000] #gen_datasizes((50,600),50)
-	# print datasets
-	accs = testing_kround_ksize(datasizes, 20)
-	# print accs
-	plot_accuracy(accs, datasizes)
+	datasizes = gen_datasizes((100, 900),100) + gen_datasizes((1000,5000), 200)# + [50000] # [100, 200, 300] #[100, 500, 1000, 5000] #gen_datasizes((50,600),50)
+	plot_accuracy(exprmt_k_ns(datasizes, 20), datasizes)
 
 
 
