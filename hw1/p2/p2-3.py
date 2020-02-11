@@ -21,6 +21,8 @@ def gen_datas_d(n, d_list):
 def gen_datasizes(r, step):
 	return [i*step for i in range(r[0]/step,r[1]/step + 1)]
 
+def gen_cfft(d):
+	return np.array([random.choice([-1/sqrt(d), 1/sqrt(d)]) for _ in range(d)])
 #############################################################################
 #RELEASING THE NOIZED VERSION OF QUERY
 #############################################################################
