@@ -18,7 +18,7 @@ from scipy.special import gammaln
 #############################################################################
 
 def gen_dataset(n):
-	return np.array([random.randint(0, 1)for i in range(n)]).reshape((n,1))
+	return np.array([random.randint(0, 1)for i in range(n)])
 
 
 def gen_datasizes(r, step):
@@ -32,90 +32,71 @@ def gen_query(n):
 	return np.array([np.array([1]*i + [0]*(n - i)) for i in range(1, n + 1)])
 
 def releasing_dataset(query, dataset):
-	return np.array([np.dot(query[i], dataset) + random.randint(0,1) for i in range(len(dataset))])
+	return np.array([np.dot(query[i], dataset.transpose()) + random.randint(0,1) for i in range(len(dataset))])
 
 
 #############################################################################
 #ATTACK WITH ONLY THE KNOWLEDGE OF THE OBSERVATION OF ONE DATABASE
 #############################################################################
 def attack_no_aux(observation):
-	s = [observation[0]] + list((observation[1:] - observation[: -1]))
-	return np.array([[0] if r < 0 else [1] if r > 1 else r for r in s] ).reshape(len(observation), 1)
-
-
-#############################################################################
-#ATTACK2 WITH ONLY THE KNOWLEDGE OF THE OBSERVATION OF ONE DATABASE
-#############################################################################
-
-def minimize_error_attack_no_aux(query, observation):
-	n = len(observation)
-	k = 0
-	opt, s = 2*n, [observation[0]] + list((observation[1:] - observation[: -1]))
-	# print s
-	att = np.array([[0] if r < 0 else [1] if r > 1 else r for r in s] ).reshape(n, 1)
-	for i in range(n):	
-		if s[i] < 0 or s[i] > 1:
-			continue
-		att[i] = 1 - att[i]
-		error = np.sum(abs(np.subtract(observation, np.dot(query, att))) )
-		if error < opt:
-			opt = error
+	# print ":attack:"
+	# print observation
+	rec_counter = [observation[0] - 1 if observation[0] > 1 else observation[0]]
+	# print rec_counter
+	for i in range(1, len(observation)):
+		s = observation[i] - rec_counter[i - 1]
+		if s > 1:
+			rec_counter.append(observation[i] - 1)
+		elif s < 0:
+			rec_counter.append(observation[i])
+			j = i
+			while j - 1 >= 0 and rec_counter[j] < rec_counter[j - 1]:
+				j -= 1
+				rec_counter[j] -= 1
 		else:
-			att[i] = 1 - att[i]
-		print error, att
+			rec_counter.append(observation[i])
+		# print rec_counter
 
-	return att
-
-# def minimize_error_attack_no_aux(query, observation):
-# 	n = len(observation)
-# 	k = 0
-# 	opt_att = []
-# 	opt, s = 2*n, [observation[0]] + list((observation[1:] - observation[: -1]))
-# 	# print s
-# 	# att = np.array([[0] if r < 0 else [1] if r > 1 else r for r in s] ).reshape(n, 1)
-# 	while k < 20:
-# 		k += 1
-# 		att = np.array([[random.random()] for _ in observation])
-# 		error = np.sum(abs(np.subtract(observation, np.dot(query, att))) )
-# 		if error < opt:
-# 			opt = error
-# 			opt_att = np.round(att)
-# 		print opt, opt_att
-
-# 	return opt_att
-# def attacks_no_aux(observations):
-# 	return [attack_no_aux(o) for o in observations]
-
-
-# def attacks_no_aux(observations):
-# 	return [attack_no_aux(o) for o in observations]
+	# print ([rec_counter[i] - rec_counter[i - 1] for i in range(1, len(observation))])
+	return np.array([rec_counter[0]] + [rec_counter[i] - rec_counter[i - 1] for i in range(1, len(observation))])
 
 
 #############################################################################
 #ATTACK WITH AUXILLARY INFORMATION AND THE OBSERVATION OF ONE DATABASE
 #############################################################################
 def attack_with_aux(observation, guess):
-	attack_no_aux(observation), w
-	return
+	rec_counter = [observation[0] - 1 if observation[0] > 1 else observation[0]]
+	# print rec_counter
+	for i in range(1, len(observation)):
+		s = observation[i] - rec_counter[i - 1]
+		if s > 1:
+			rec_counter.append(observation[i] - 1)
+		elif s < 0:
+			rec_counter.append(observation[i])
+			j = i
+			while j - 1 >= 0 and rec_counter[j] < rec_counter[j - 1]:
+				j -= 1
+				rec_counter[j] -= 1
+		else:
+			rec_counter.append(observation[i] if s == guess[i] else rec_counter[i - 1] + guess[i])
+		# print rec_counter
+
+	# print ([rec_counter[i] - rec_counter[i - 1] for i in range(1, len(observation))])
+	return np.array([rec_counter[0]] + [rec_counter[i] - rec_counter[i - 1] for i in range(1, len(observation))])
 
 def accuracy(att, data):
 	return sum([1 if att[i] == data[i] else 0 for i in range(len(att))])/ (len(data)*1.0)
 
 
-# def accuracys(atts, datas):
-# 	return [accuracy(atts[i], datas[i]) for i in range(len(atts))]
-
-# def testing(datasizes):
-# 	datasets = gen_datasets(datasizes)
-# 	obs = releasing_datasets(datasets)
-# 	atts = attacks_no_aux(obs)
-# 	return accuracys(atts, datasets)
-
 def exprmt_k(n, k):
 	acc = 0.0
 	for i in range(k):
+		# print "round:", i
 		dataset, q = gen_dataset(n), gen_query(n)
-		acc += accuracy(attack_no_aux(releasing_dataset(q, dataset)), dataset)
+		# print "data:", dataset
+		# acc += accuracy(attack_no_aux(releasing_dataset(q, dataset)), dataset)
+		guess = [d if random.random() >= (1.0/3) else 1 - d for d in dataset]
+		acc += accuracy(attack_with_aux(releasing_dataset(q, dataset), guess), dataset)
 	return acc/k
 
 
@@ -141,8 +122,8 @@ if __name__ == "__main__":
 	#SETTING UP THE PARAMETERS WHEN DOING GROUPS EXPERIMENTS
 	#############################################################################
 	
-	datasizes = gen_datasizes((100, 900),100) + gen_datasizes((1000,5000), 200)# + [50000] # [100, 200, 300] #[100, 500, 1000, 5000] #gen_datasizes((50,600),50)
-	plot_accuracy(exprmt_k_ns(datasizes, 20), datasizes)
+	datasizes = [1000] # gen_datasizes((100, 900),100) # + gen_datasizes((1000,5000), 200)# + [50000] # [100, 200, 300] #[100, 500, 1000, 5000] #gen_datasizes((50,600),50)
+	plot_accuracy(exprmt_k_ns(datasizes, 100), datasizes)
 
 
 
