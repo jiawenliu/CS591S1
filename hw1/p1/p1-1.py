@@ -39,8 +39,6 @@ def releasing_dataset(query, dataset):
 #ATTACK WITH ONLY THE KNOWLEDGE OF THE OBSERVATION OF ONE DATABASE
 #############################################################################
 def attack_no_aux(observation):
-	# print ":attack:"
-	# print observation
 	rec_counter = [observation[0] - 1 if observation[0] > 1 else observation[0]]
 	# print rec_counter
 	for i in range(1, len(observation)):
