@@ -1,0 +1,315 @@
+
+\begin{lstlisting}[label=code-p1-1, language=Python, caption=Python Code For Problem 1 - 1, Attack without Side Information]
+import random
+import numpy as np
+
+#GENERATING DATA SIZE AND CONRRESPONDING PARAMETER
+def gen_dataset(n):
+	return [random.randint(0, 1)for i in range(n)]
+def gen_datasizes(r, step):
+	return [i*step for i in range(r[0]/step,r[1]/step + 1)]
+
+#RELEASING THE NOIZED VERSION OF DATABASE
+def releasing_dataset(dataset):
+	return [sum(dataset[:(i + 1)]) + random.randint(0,1) for i in range(len(dataset))]
+
+#ATTACK WITH ONLY THE KNOWLEDGE OF THE OBSERVATION OF ONE DATABASE
+def attack_no_aux(observation):
+	rec_counter = [observation[0] - 1 if observation[0] > 1 else observation[0]]
+	for i in range(1, len(observation)):
+		s = observation[i] - rec_counter[i - 1]
+		if s > 1:
+			rec_counter.append(observation[i] - 1)
+		elif s < 0:
+			rec_counter.append(observation[i])
+			j = i
+			while j - 1 >= 0 and rec_counter[j] < rec_counter[j - 1]:
+				j -= 1
+				rec_counter[j] -= 1
+		else:
+			rec_counter.append(observation[i])
+	return np.array([rec_counter[0]] + [rec_counter[i] - rec_counter[i - 1] for i in range(1, len(observation))])
+
+###ATTACK OF MINIMIZING ERROR WITH ONLY THE KNOWLEDGE OF OBSERVATION
+def attack_no_aux_minerror(observation):
+	n, error, r = len(observation), float("inf"), observation
+	for i in range(1000):
+		s = gen_dataset(n)
+		e = sum(abs(releasing_dataset(gen_query(n), s) - observation))
+		if e < error:
+			r = s
+			error = e
+	return r
+
+###CALCULATING THE ACCURACY
+def accuracy(att, data):
+	return sum([1 if att[i]==data[i] else 0 for i in range(len(att))])/(len(att)*1.0)
+
+def plot_accuracy(ys, ns):
+	plt.figure()
+	plt.plot(ns, ys, "ro-", label = "Accuracy.")
+	plt.plot(ns,[sum(ys)/len(ys)]*len(ys), "b-", label="Average Acc.",linewidth=3.0)
+	plt.xlabel("n / size of the database")
+	plt.ylabel("accuracy / fraction of the bits recovered")
+	plt.title("Linear Attack")
+	plt.legend()
+	plt.grid()
+	plt.show()
+
+#EXPERIMENTING WITH FIXED N FOR K ROUNDS
+def exprmt_k(n, k):
+	acc = 0.0
+	for i in range(k):
+		dataset, q = gen_dataset(n), gen_query(n)
+		acc += accuracy(attack_no_aux(releasing_dataset(q,dataset)),dataset)
+	return acc/k
+def exprmt_k_ns(ns, k):
+	return [testing_kround(n, k) for n in ns]
+
+if __name__ == "__main__":
+	datasizes = gen_datasizes((100,900),100)+gen_datasizes((1000,5000),200)+[50000]
+	plot_accuracy(exprmt_k_ns(datasizes, 20), datasizes)
+
+\end{lstlisting}
+
+
+\begin{lstlisting}[label=code-p1-2, language=Python, caption=Python Code For Attack with side Information]
+def attack_with_aux(observation, guess):
+	rec_counter, n = [observation[0] - 1 if observation[0] > 1 else guess[0]], len(observation)
+	certain = [-1] * n
+
+	for i in range(1, n):
+		s = observation[i] - rec_counter[i - 1]
+		if s > 1:
+			rec_counter.append(observation[i] - 1)
+			j = i
+			certain[j] = 1
+			while j - 1 >= 0 and rec_counter[j - 1] < rec_counter[j] and certain[j - 1] == -1:
+				j -= 1
+		elif s < 0:
+			rec_counter.append(observation[i])
+			j = i
+			certain[j] = 0
+			while j - 1 >= 0 and rec_counter[j] < rec_counter[j - 1]:
+				j -= 1
+				rec_counter[j] -= 1
+				certain[j] = 0
+		else:
+			rec_counter.append(observation[i])
+	for i in range(n):
+		if certain[i] == -1:
+			certain[i] = guess[i]
+	return np.array(certain)
+
+def exprmt_k(n, k):
+	acc = 0.0
+	for i in range(k):
+		dataset, q = gen_dataset(n), gen_query(n)
+		guess = [d if random.random() >= (1.0/3) else 1 - d for d in dataset]
+		acc += accuracy(attack_with_aux(releasing_dataset(q, dataset), guess), dataset)
+	return acc/k
+
+\end{lstlisting}
+
+
+
+\begin{lstlisting}[label = code-p2-2a, language=Python, caption=Python Code for Problem 2 - 2 - (a)]
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+#GENERATING DATA SIZE AND CONRRESPONDING PARAMETER
+def gen_data(d, n): return np.array([[random.choice([-1,1]) for _ in range(d)] for i in range(n)])
+
+def F_test(A, X): return np.dot(A, X.transpose())
+
+def query_avg(data):
+	return np.array(map(sum, data.transpose()))/(len(data)*1.0)
+
+def gaussi_mech(query, sigma, data): return query(data) + np.array([random.gauss(0, sigma) for _ in data[0]]) 
+def scores(A, data): return F_test(A, data)
+
+def true_positive(sc1, sc2):
+	return sum(map(lambda s: 1.0 if s*1.0/len(sc1) > 0.95 else 0, 
+		[sum(map(lambda s2: 1.0 if s1 > s2 else 0, sc2)) for s1 in sc1])) / len(sc1)
+
+def exprmt(d, n, sigma):
+	p, k = 0.0, 1
+	for i in range(k):
+		data, out_data = gen_data(d, n), gen_data(d, n)
+		A = gaussi_mech(query_avg, sigma, data)
+		p += true_positive(scores(A, data), scores(A, out_data))
+	return p/k
+
+def exprmt_d(n, d_list, sigma): return [exprmt(d, n, sigma) for d in d_list]
+
+def plot_accuracy(ys, ns):
+	plt.figure()
+	plt.plot(ns, ys, "ro-")
+	plt.xlabel("d / dimension of the database (# of attributes)")
+	plt.ylabel("true positive rate")
+	plt.legend()
+	plt.grid()
+	plt.show()
+
+if __name__ == "__main__":
+	d_list = [100, 200, 400, 800, 2000, 5000]
+	tp = exprmt_d(100, d_list, 1/3.0)
+	plot_accuracy(tp, d_list)
+
+\end{lstlisting}
+
+
+\begin{lstlisting}[label = code-p2-2b, language=Python, caption=Python Code for Problem 2 - 2 - (b)]
+def rounding_mech(query, sigma, data):
+	return np.array(map(round, query(data)/sigma)) * sigma
+\end{lstlisting}
+
+
+\begin{lstlisting}[label = code-p2-3, language=Python, caption=Python Code for Problem 2 - 3]
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+import math
+from functools import partial
+
+#GENERATING DATA SIZE AND CONRRESPONDING PARAMETER
+def gen_data(d, n):
+	return np.array([[random.choice([-1,1]) for _ in range(d)] for i in range(n)])
+
+def gen_cfft(d):
+	return np.array([random.choice([-1/math.sqrt(d), 1/math.sqrt(d)]) for _ in range(d)])
+
+def gen_label(data, c, sigma):
+	return np.dot(c, data.transpose()) + np.array([random.gauss(0, sigma) for _ in data]) 
+
+def LSLR(data, label):
+	return np.linalg.lstsq(data, label)[0]
+
+def classifier(w, target):
+	return 1.0 if abs(np.dot(w, target[0].transpose()) - target[1]) < 0.01 else 0.0
+
+def scores(w, pos_targets, neg_targets):
+	return [classifier(w, p) for p in pos_targets], [classifier(w, p) for p in neg_targets]
+
+def true_positive(sc1, sc2):
+	return sum(sc1) / (len(sc1))
+
+def false_negtive(sc1, sc2):
+	return 1.0 - sum(sc1) / (len(sc1))
+
+def true_negtive(sc1, sc2):
+	return sum(sc2) / (len(sc2))
+
+def false_positive(sc1, sc2):
+	return 1.0 - sum(sc2) / (len(sc2))
+
+def exprmt(d, n, sigma):
+	data, coefft, neg_data = gen_data(d, n), gen_cfft(d), gen_data(d, n)
+	y, neg_y = gen_label(data, coefft, sigma), gen_label(neg_data, coefft, sigma)
+	score = scores(LSLR(data, y), zip(data, y), zip(neg_data, neg_y))
+	return true_positive(score[0], score[1]), true_negtive(score[0], score[1])
+
+def exprmt_d(n, d_list, sigma):
+	return [exprmt(d, n, sigma) for d in d_list]
+
+def plot_accuracy(ys, ns):
+	plt.figure()
+	plt.plot(ns, [y[0] for y in ys], "ro-", label = "true positive rate")
+	plt.plot(ns, [y[1] for y in ys], "bo-", label = "true negtive rate")
+	plt.xlabel("d / dimension of the database (# of attributes)")
+	plt.ylabel("accuracy rate")
+	plt.legend()
+	plt.grid()
+	plt.show()
+
+if __name__ == "__main__":
+	d_list = [100, 200, 400, 800, 2000, 3000, 5000]
+	tp = exprmt_d(100, d_list, 0.1)
+	plot_accuracy(tp, d_list)
+\end{lstlisting}
+
+%
+\begin{lstlisting}[label = code-p4-3, language=Python, caption=Python Code for Problem 4 - 3]
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+
+#GENERATING DATA SIZE AND CONRRESPONDING PARAMETER
+def gen_data(d, n,  M, sigma):
+	unnormx = [random.choice(M) + np.array([random.gauss(0, sigma) for _ in range(d)]) for i in range(n)]
+	return np.array([ x / sum(abs(x)) if sum(abs(x)) > 1 else x for x in unnormx]) 
+
+def gen_point(d):
+	p = np.array([random.uniform(-1, 1) for _ in range(d)])
+	while sum(abs(p)) > 1.0:
+		p = np.array([random.uniform(-1, 1) for _ in range(d)])
+	return np.array(p)
+
+#PURE K_MEAN ALGORITHM
+def k_clustering(data, T, eps, k):
+	ctrs = np.array([gen_point(len(data[0])) for _ in range(k)]) #initialize the centers
+	ctrs_record = []
+	for _ in range(T):
+		distance, S, used = [[sum(abs(row - c)) for c in ctrs] for row in data], [[] for _ in range(k)], [False]*len(data)
+		for j in range(k):
+			for i in range(len(data)):
+				if distance[i][j] <= min(distance[i]) and not used[i]:
+					used[i] = True
+					S[j].append(data[i])
+		ctrs = [sum(S[i])/ len(S[i]) if S[i] != [] else gen_point(len(data[0])) for i in range(k)]
+		ctrs_record.append(np.array(ctrs))
+	return np.array(ctrs), np.array(ctrs_record)
+
+#PRIVATE VERSION OF K_MEAN ALGORITHM
+def k_clustering_private(data, T, eps, k):
+	ctrs = np.array([gen_point(len(data[0])) for _ in range(k)]) #initialize the centers
+	eps, ctrs_record = eps/(2.0 * T), []
+	for _ in range(T):
+		distance, S, used = [[sum(abs(row - c)) for c in ctrs] for row in data], [[] for _ in range(k)], [False]*len(data)
+		for j in range(k):
+			for i in range(len(data)):
+				if distance[i][j] <= min(distance[i]) and not used[i]:
+					S[j].append(data[i])
+					used[i] = True # prevent two data point added to two different sets when they have the same distance
+		ctrs = [(sum(S[i]) + np.random.laplace(0.0, eps))/ (len(S[i]) + np.random.laplace(0.0, 2*eps)) if len(S[i]) > 5 else gen_point(len(data[0])) for i in range(k)]
+		ctrs_record.append(np.array(ctrs))
+	return np.array(ctrs), np.array(ctrs_record)
+
+
+def plot_accuracy(data, centers, M):
+	def obx (data):
+		return list(data.transpose()[0])
+	def oby (data):
+		return list(data.transpose()[1])
+	def ithcx(data, i):
+		return data.transpose()[0][i]
+	def ithcy(data, i):
+		return data.transpose()[1][i]
+	plt.figure()
+	plt.plot(obx(data), oby(data), "o", color="orchid", label="data")
+	for i in range(len(M)):
+		plt.plot((ithcx(centers, i)), (ithcy(centers, i)), "*--", label="centers" + str(i))
+	plt.plot(obx(M), oby(M), "g^", label="M")
+	plt.legend()
+	plt.grid()
+	plt.show()
+
+
+
+
+if __name__ == "__main__":
+
+	#SETTING UP THE PARAMETERS WHEN DOING GROUPS EXPERIMENTS
+	M = np.array([[0, 0.5], [0.2, -0.2], [-0.2, -0.2]])
+	data = gen_data(2, 2000, M, 0.01)
+	#EXPERIMENTS WIEH PRIVATE K_MEANS
+	centers, records = k_clustering_private(data, 10, 0.1, 3)
+	plot_accuracy(data, records, M)
+	#EXPERIMENTS WIEH PURE K_MEANS
+	centers, records = k_clustering(data, 10, 0.1, 3)
+	plot_accuracy(data, records, M)
+
+
+
+\end{lstlisting}
+
