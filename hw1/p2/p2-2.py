@@ -37,7 +37,7 @@ def exprmt(d, n, sigma):
 	p, k = 0.0, 1
 	for i in range(k):
 		data, out_data = gen_data(d, n), gen_data(d, n)
-		A = gaussi_mech(query_avg, sigma, data)
+		A = rounding_mech(query_avg, sigma, data)
 		s_in, s_out = scores(A, data), scores(A, out_data)
 		p += true_positive(s_in, s_out)
 
