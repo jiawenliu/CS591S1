@@ -1,0 +1,296 @@
+\documentclass[11pt]{article}
+\input{prelude}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{multicol, latexsym, amssymb}
+\usepackage{blindtext}
+\usepackage{subcaption}
+\usepackage{caption}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\usepackage{tabu}
+
+\begin{document}
+
+\title{
+{\textbf{CS591S1 Homework 2: More on Differential Privacy}}
+}
+\author{Jiawen Liu\\
+Collaborators: none.}
+
+\date{}
+\maketitle
+
+\section{Problem 1}
+
+\begin{enumerate}
+	\item (Sensitivity)
+
+	Given data set $\data$, for arbitrary $y\in \{ 1, \cdots, R \}$ and adjacent dataset $\data'$ by insertion or deletion of one data point $x_k$, we have following cases for insertion (deletion will be symmetric):
+	\begin{itemize}
+		\item $y = x_k$:
+		\[
+		q(y; \data') 
+		= - | \sum_{i = 0}^{n} sign(y - x_i) + sign( y - x_k) | 
+		= - | \sum_{i = 0}^{n} sign(y - x_i) + 0 |
+		= - | \sum_{i = 0}^{n} sign(y - x_i) |
+		= q(y; \data)
+		\]
+
+		\item $y < x_k$
+		%
+		\[
+		\begin{array}{rcl}
+		q(y; \data') 
+		& = &
+		- | \sum_{i = 0}^{n} sign(y - x_i) + sign( y - x_k) | \\
+		& = &
+		- | \sum_{i = 0}^{n} sign(y - x_i) - 1 | ~ (\star)
+		\end{array}
+		\]
+		%
+		By triangle inequality, we have:
+		\[
+		\begin{array}{rcl}
+		(\star) & 
+		 \leq & 
+		 - | \sum_{i = 0}^{n} sign(y - x_i) |  + 1
+		= q(y; \data) + 1\\
+		%
+		(\star) &
+		 \geq & 
+		 - | \sum_{i = 0}^{n} sign(y - x_i) |  - 1
+		 =
+		 q(y; \data) - 1
+		\end{array}
+		\]
+		%
+		Then we can get:
+		%
+		\[
+		-1 \leq q(y; \data') - q(y; \data) \leq 1
+		\]
+		%
+		\item $y > x_k$
+		%
+		\[
+		\begin{array}{rcl}
+		q(y; \data') 
+		& = &
+		- | \sum_{i = 0}^{n} sign(y - x_i) + sign( y - x_k) | \\
+		& = &
+		- | \sum_{i = 0}^{n} sign(y - x_i) + 1 | ~ (\star)
+		\end{array}
+		\]
+		%
+		By triangle inequality, we have:
+		\[
+		\begin{array}{rcl}
+		(\star) & 
+		 \leq & 
+		 - | \sum_{i = 0}^{n} sign(y - x_i) |  + 1
+		= q(y; \data) + 1\\
+		%
+		(\star) &
+		 \geq & 
+		 - | \sum_{i = 0}^{n} sign(y - x_i) |  - 1
+		 =
+		 q(y; \data) - 1
+		\end{array}
+		\]
+		%
+		Then we can get:
+		%
+		\[
+		-1 \leq q(y; \data') - q(y; \data) \leq 1
+		\]
+		%
+	\end{itemize}
+	The Deletion is symmetric where we can get: $-1 \leq q(y; \data) - q(y; \data') \leq 1$ in the same way.
+	%
+	\\
+	%
+	Then, we can conclude from all cases, the $| q(y; \data) - q(y; \data') | \leq 1$, i.e., the sensitivity be at most 1.
+	%
+	%
+	\item 
+	\begin{proof}
+	By the definition of $rank_{\data}(y)$, we have:
+	\[
+	|rank_{\data}(y) - \frac{n}{2}| = - q(y; \data).
+	\]
+	Then, we know:
+	%
+	\[
+	\begin{array}{lll}
+	Pr_{y \sim A_{\epsilon}(\data)}[|rank_{\data}(y) - \frac{n}{2}|
+	> 
+	c \cdot \frac{\ln(R) + \ln(1 / \beta)}{\epsilon}] 
+	& \equiv &
+	Pr_{y \sim A_{\epsilon}(\data)}[- q(y; \data)
+	> 
+	c \cdot \frac{\ln(R) + \ln(1 / \beta)}{\epsilon}]\\
+	& = &
+	Pr_{y \sim A_{\epsilon}(\data)}[q(y; \data)
+	\leq 
+	- c \cdot \frac{\ln(R) + \ln(1 / \beta)}{\epsilon}]	
+	\end{array}
+	\]
+	%
+	By definition of exponential mechanism, we have:
+	%
+	\[
+	\begin{array}{lll}
+	Pr_{y \sim A_{\epsilon}(\data)}[q(y; \data)
+	\leq 
+	- c \cdot \frac{\ln(R) + \ln(1 / \beta)}{\epsilon}]
+	& = &
+	\sum\limits_{y| q(y; \data) < - c \cdot \frac{\ln(R) + \ln(1 / \beta)}{\epsilon}}
+	\frac{\exp \big( q(y; \data)\epsilon / 2S \big)}
+	{\sum\limits_{y}\exp \big( q(y; \data)\epsilon / 2S \big)}\\
+	%
+	& \leq &
+	R
+	\frac{\exp \big( - c \cdot \frac{\ln(R) + \ln(1 / \beta)}{\epsilon}
+	\frac{\epsilon}{2S} \big)}
+	{\sum\limits_{y}\exp \big( q(y; \data)\epsilon / 2S \big)}\\	
+	%
+	& = &
+	R
+	\frac{\exp \big(  \frac{c}{2} (\ln(\frac{1}{R}) + \ln(\beta)) \big)}
+	{\sum\limits_{y}\exp \big( q(y; \data)\epsilon / 2S \big)} ~(\star)
+	\end{array}
+	\]
+	%
+	Since the only one optimal output candidate is the median value where $q(y, \data) = 0$, so we have:
+	%
+	\[
+	\begin{array}{lll}
+	(\star) & \leq &
+	\frac{\exp \big(  \frac{c}{2} (\ln(\frac{1}{R}) + \ln(\beta)) \big)}
+	{\exp ( 0)}\\	
+	\end{array}
+	\]
+	%
+	In order to have this probability be at most $\beta$, we take the equality and get:
+	%
+	\[
+	\begin{array}{rcl}
+	\frac{\exp \big(  \frac{c}{2} (\ln(\frac{1}{R}) + \ln(\beta)) \big)}
+	{\exp ( 0)}
+	& = & \beta\\
+	R^{1 - \frac{c}{2}}	& = & \beta^{1 - \frac{c}{2}}
+	\end{array}
+	\]
+	%
+	Since we have $R \geq 1$ and $\beta \in (0,1)$, there exists $c = 2$ which can make the equation holds.
+	%
+	%
+	\end{proof}
+\end{enumerate}
+
+
+\section{Problem 2}
+\begin{proof}
+The proof are developed by two cases where the insertion and deletion whether or not make changes on empty bins:
+\begin{itemize}
+\caseL{changes on nonempty bins}
+Taking arbitrary data set $\data$ and one possible output $S$, there are two cases of insertion to create the adjacent data set $\data'$:
+%
+\begin{itemize} 
+\subcaseL{insertion} Inserting one data that makes an empty bin ($k \in \domain$) be nonempty, we have the 
+%
+\[
+	\begin{array}{rcl}
+	\frac{Pr[A(\data') = S]}
+	{Pr[A(\data) = S]}
+	& = & 
+	\frac{ Pr[A(\data) = S \land \tilde{c'_k} < \tau ] }
+	{Pr[A(\data) = S]}\\
+	& = &
+	\frac{Pr[A(\data) = S] \cdot Pr[ \tilde{c'_k} < \tau ] }
+	{Pr[A(\data) = S]}\\
+	& = &
+	Pr[ 1 + Lap(\frac{1}{\epsilon}) < \tau]\\
+	& \leq &
+	(1 - \frac{\delta}{2})
+	\end{array}
+\]
+
+\subcaseL{deletion.} Deleting one data point that makes the existing nonempty bins ($k \in \domain$) be empty bins, we have the probability as:
+%
+\[
+	\begin{array}{rcl}
+	\frac{Pr[A(\data') = S]}
+	{Pr[A(\data) = S]}
+	& = & 
+	\frac{ Pr[A(\data') = S] }
+	{Pr[A(\data') = S ~ \land ~ \tilde{c_k} < \tau ]}\\
+	& = &
+	\frac{Pr[A(\data') = S]] }
+	{Pr[A(\data') = S] \cdot Pr[ \tilde{c_k} < \tau ]}\\
+	& = &
+	\frac{1}{Pr[ 1 + Lap(\frac{1}{\epsilon}) < \tau]}\\
+	& \geq &
+	\frac{1}{1 - \frac{\delta}{2}}
+	\end{array}
+\]
+
+\end{itemize}
+
+\caseL{no change on nonempty bins}
+Taking arbitrary data set $\data$ and a possible output $S$, There are two cases of creating the adjacent data set $\data'$:
+%
+\begin{itemize} 
+\subcaseL{insertion} insert one data which makes an empty bin ($k \in \domain$) be nonempty, we have the 
+\[
+	\begin{array}{rcl}
+	\frac{Pr[A(\data') = S]}
+	{Pr[A(\data) = S]}
+	& = & 
+	\frac{Pr[A(\data \setminus k) = S\setminus k 
+	\land \tilde{c'_k} = \tilde{c_k}]}
+	{Pr[A(\data) = S]}\\
+	& = &
+	\frac{Pr[A(\data \setminus k) = S\setminus k ] \cdot Pr[\tilde{c'_k} = \tilde{c_k}]}
+	{Pr[A(\data) = S]}\\
+	& = &
+	\frac{Pr[ c'_k + Lap(\frac{1}{\epsilon}) = \tilde{c_k}]}
+	{Pr[c_k + Lap(\frac{1}{\epsilon}) = \tilde{c_k}]}\\
+	& \leq &
+	e^{\epsilon}
+	\end{array}
+\]
+%
+\subcaseL{deletion} insert one data point in the existing nonempty bins ($k \in \domain$).
+We have the probability as:
+\[
+	\begin{array}{rcl}
+	\frac{Pr[A(\data') = S]}
+	{Pr[A(\data) = S]}
+	& = & 
+	\frac{Pr[A(\data \setminus k) = S\setminus k 
+	\land \tilde{c'_k} = \tilde{c_k}]}
+	{Pr[A(\data) = S]}\\
+	& = &
+	\frac{Pr[A(\data \setminus k) = S\setminus k ] \cdot Pr[\tilde{c'_k} = \tilde{c_k}]}
+	{Pr[A(\data) = S]}\\
+	& = &
+	\frac{Pr[ c'_k + Lap(\frac{1}{\epsilon}) = \tilde{c_k}]}
+	{Pr[c_k + Lap(\frac{1}{\epsilon}) = \tilde{c_k}]}\\
+	& \geq &
+	e^{-\epsilon}
+	\end{array}
+\]
+
+\end{itemize}
+
+\end{itemize}
+By summarization, the probability of failure would be $\delta$ above cases. So we have the algorithm be $(\epsilon, \delta)$-DP. 
+\end{proof}
+
+
+
+\end{document}
