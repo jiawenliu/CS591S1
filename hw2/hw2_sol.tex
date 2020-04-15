@@ -194,101 +194,107 @@ Collaborators: none.}
 
 \section{Problem 2}
 \begin{proof}
-The proof are developed by two cases where the insertion and deletion whether or not make changes on empty bins:
-\begin{itemize}
-\caseL{changes on nonempty bins}
-Taking arbitrary data set $\data$ and one possible output $S$, there are two cases of insertion to create the adjacent data set $\data'$:
+The proof are developed by two symmetric cases: insertion and deletion.
 %
+\begin{itemize}
+\caseL{Insertion}
+Taking two adjacent data sets $\data$, $\data'$ where $\data'$ contains one more data point.
+For any output set $S$, there are following cases by output space:
 \begin{itemize} 
-\subcaseL{insertion} Inserting one data that makes an empty bin ($k \in \domain$) be nonempty, we have the 
+\item $S \subseteq E_{bad}$ Inserting one data that makes an empty bin ($k \in \domain$) be nonempty and this bin is contained in the output set $S$.
+\[
+	\begin{array}{rcl}
+	Pr[A(\data') = S]
+	& = & 
+	Pr[\tilde{c'_k} > \tau ] \leq \frac{\delta}{2}\\
+	Pr[A(\data) = S]
+	& = & 0
+	\end{array}
+\]
+\item $S \subseteq E_{0}$ Inserting one data that makes an empty bin ($k \in \domain$) be nonempty and this bin is not contained in the output set.The probability ratio 
 %
 \[
 	\begin{array}{rcl}
-	\frac{Pr[A(\data') = S]}
-	{Pr[A(\data) = S]}
+	1 > \frac{Pr[A(\data') \in S]}
+	{Pr[A(\data) \in S]}
 	& = & 
-	\frac{ Pr[A(\data) = S \land \tilde{c'_k} < \tau ] }
-	{Pr[A(\data) = S]}\\
+	\frac{ Pr[A(\data) \in S \land \tilde{c'_k} < \tau ] }
+	{Pr[A(\data) \in S]}\\
 	& = &
-	\frac{Pr[A(\data) = S] \cdot Pr[ \tilde{c'_k} < \tau ] }
-	{Pr[A(\data) = S]}\\
-	& = &
-	Pr[ 1 + Lap(\frac{1}{\epsilon}) < \tau]\\
-	& \leq &
+	\frac{Pr[A(\data) \in S] \cdot Pr[ \tilde{c'_k} < \tau ] }
+	{Pr[A(\data) \in S]}\\
+	& = & 
+	Pr[ \tilde{c'_k} = 1 + Lap(\frac{1}{\epsilon}) < \tau]\\
+	& \geq &
 	(1 - \frac{\delta}{2})
 	\end{array}
 \]
 
-\subcaseL{deletion.} Deleting one data point that makes the existing nonempty bins ($k \in \domain$) be empty bins, we have the probability as:
-%
+\item $S \subseteq E_{1}$ Inserting one data that doesn't change non-empty bins:
 \[
 	\begin{array}{rcl}
-	\frac{Pr[A(\data') = S]}
-	{Pr[A(\data) = S]}
+	e^{-\epsilon} \leq \frac{Pr[A(\data') \in S]}
+	{Pr[A(\data) \in S]}
 	& = & 
-	\frac{ Pr[A(\data') = S] }
-	{Pr[A(\data') = S ~ \land ~ \tilde{c_k} < \tau ]}\\
+	\frac{Pr[A(\data \setminus k) \in S\setminus k 
+	\land \tilde{c'_k} \in S \cap k]}
+	{Pr[A(\data' \setminus k) \in S\setminus k 
+	\land \tilde{c_k} \in S \cap k]}\\
 	& = &
-	\frac{Pr[A(\data') = S]] }
-	{Pr[A(\data') = S] \cdot Pr[ \tilde{c_k} < \tau ]}\\
+	\frac{Pr[A(\data \setminus k) = S\setminus k ] 
+	\cdot Pr[\tilde{c'_k} \in S \cap k]}
+	{Pr[A(\data \setminus k) = S\setminus k ] 
+	\cdot Pr[\tilde{c'_k} \in S \cap k]}\\
 	& = &
-	\frac{1}{Pr[ 1 + Lap(\frac{1}{\epsilon}) < \tau]}\\
-	& \geq &
-	\frac{1}{1 - \frac{\delta}{2}}
-	\end{array}
-\]
-
-\end{itemize}
-
-\caseL{no change on nonempty bins}
-Taking arbitrary data set $\data$ and a possible output $S$, There are two cases of creating the adjacent data set $\data'$:
-%
-\begin{itemize} 
-\subcaseL{insertion} insert one data which makes an empty bin ($k \in \domain$) be nonempty, we have the 
-\[
-	\begin{array}{rcl}
-	\frac{Pr[A(\data') = S]}
-	{Pr[A(\data) = S]}
-	& = & 
-	\frac{Pr[A(\data \setminus k) = S\setminus k 
-	\land \tilde{c'_k} = \tilde{c_k}]}
-	{Pr[A(\data) = S]}\\
-	& = &
-	\frac{Pr[A(\data \setminus k) = S\setminus k ] \cdot Pr[\tilde{c'_k} = \tilde{c_k}]}
-	{Pr[A(\data) = S]}\\
-	& = &
-	\frac{Pr[ c'_k + Lap(\frac{1}{\epsilon}) = \tilde{c_k}]}
-	{Pr[c_k + Lap(\frac{1}{\epsilon}) = \tilde{c_k}]}\\
+	\frac{Pr[ \tilde{c_k'} \in S \cap k]}
+	{Pr[\tilde{c_k} \in S \cap k]}\\
 	& \leq &
 	e^{\epsilon}
 	\end{array}
 \]
+\end{itemize}
+By summarization, we have following equations:
 %
-\subcaseL{deletion} insert one data point in the existing nonempty bins ($k \in \domain$).
-We have the probability as:
 \[
 	\begin{array}{rcl}
-	\frac{Pr[A(\data') = S]}
-	{Pr[A(\data) = S]}
-	& = & 
-	\frac{Pr[A(\data \setminus k) = S\setminus k 
-	\land \tilde{c'_k} = \tilde{c_k}]}
-	{Pr[A(\data) = S]}\\
-	& = &
-	\frac{Pr[A(\data \setminus k) = S\setminus k ] \cdot Pr[\tilde{c'_k} = \tilde{c_k}]}
-	{Pr[A(\data) = S]}\\
-	& = &
-	\frac{Pr[ c'_k + Lap(\frac{1}{\epsilon}) = \tilde{c_k}]}
-	{Pr[c_k + Lap(\frac{1}{\epsilon}) = \tilde{c_k}]}\\
-	& \geq &
-	e^{-\epsilon}
+	Pr[A(\data') \in S] & = & Pr[A(\data') \in S \cap E_0] + Pr[A(\data') \in S \cap E_1] + Pr[A(\data') \in S \cap E_{Bad}]\\
+	& \leq & e^{\epsilon} Pr[A(\data) \in S \cap E_0] 
+	+  Pr[A(\data) \in S \cap E_1] 
+	+ \frac{\delta}{2}\\
+	& \leq & e^{\epsilon} Pr[A(\data) \in S\cap E_0] 
+	+ e^{\epsilon} Pr[A(\data) \in S\cap E_1] 
+	+ \frac{\delta}{2}\\
+	& = & e^{\epsilon} Pr[A(\data) \in S\cap (E_0 \cup E_1)] 
+	+ \frac{\delta}{2}\\
+	& \leq &
+	e^{\epsilon} Pr[A(\data) \in S] 
+	+ \frac{\delta}{2}\\
 	\end{array}
 \]
 
-\end{itemize}
+On the other side, we have:
+\[
+	\begin{array}{rcl}
+	Pr[A(\data') \in S] & = & Pr[A(\data') \in S \cap E_0] + Pr[A(\data') \in S \cap E_1] + Pr[A(\data') \in S \cap E_{Bad}]\\
+	&\geq & e^{-\epsilon} Pr[A(\data) \in S \cap E_0] 
+	+  (1 - \frac{\delta}{2})Pr[A(\data) \in S \cap E_1] \\
+	& \geq & \min(e^{-\epsilon}, 1 - \frac{\delta}{2}) 
+	Pr[A(\data) \in S\cap E_0] 
+	+ \min(e^{-\epsilon}, 1 - \frac{\delta}{2})
+	Pr[A(\data) \in S\cap E_1]\\
+	& = & \min(e^{-\epsilon}, 1 - \frac{\delta}{2}) Pr[A(\data) \in S\cap (E_0 \cup E_1)] \\
+	& = &
+	\min(e^{-\epsilon}, 1 - \frac{\delta}{2})
+	Pr[A(\data) \in S] \\
+	\end{array}
+\]
+
+
+\caseL{deletion.} By deletion, we have exactly the symmetric cases as insertion.
+
 
 \end{itemize}
-By summarization, the probability of failure would be $\delta$ above cases. So we have the algorithm be $(\epsilon, \delta)$-DP. 
+By summarization, the probability of failure would be $\delta$ in both cases. So we have the algorithm be $(\max(\epsilon, \ln(\frac{1}{1 - \frac{\delta}{2}})), \delta)$-DP. When $\delta$ is small, we have $\ln(\frac{1}{1 - \frac{\delta}{2}}) \sim 0$ and $\epsilon > 0$, then $(\max(\epsilon, \ln(\frac{1}{1 - \frac{\delta}{2}})), \delta)$-DP is $(\epsilon, \delta)$-DP.
 \end{proof}
 
 
