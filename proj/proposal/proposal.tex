@@ -1,0 +1,74 @@
+\documentclass{article}
+% \input{prelude}
+\usepackage{geometry}
+\usepackage{amssymb}
+\geometry{left=2.7cm,right=2.7cm, top=2cm,bottom=3.2cm}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{multicol, latexsym, amssymb}
+\usepackage{blindtext}
+\usepackage{subcaption}
+\usepackage{caption}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\usepackage{tabu}
+
+\begin{document}
+
+\title{
+{\textbf{CS591S1 Homework 2: Project Proposal}\\
+\large{Explore the Utility in Differentially Private Bayesian Inference}}
+}
+\author{Jiawen Liu\\
+Collaborators: none.}
+
+\date{}
+\maketitle
+
+\paragraph{Overview.}
+Modern data analysis techniques have enabled significant
+advances in a variety of applications in medicine, finance,
+social science, and transportation. Privacy risk occurs when individual users contributes their data, in order to obtain better
+services, these applications need large amounts of users’ data. 
+Differential privacy was proposed a decade ago to address privacy concerns in these situations, and is now the standard for privacy-preserving data analysis.
+While the privacy is always achieved at the expense of sacrificing utility, the trade-off between privacy and utility comes to the light.
+Since most of the statistical applications are driven by Bayesian inference, this project will focus on the utility and privacy for differentially private Bayesian inferences, especially on inference tasks based on two classical statistical models: the Beta-Binomial model and Linear regression model.
+This is a standard statistical tool in which a prior distribution is combined
+with a sample of observed data in order to estimate a new posterior distribution.
+
+The goal of this project is to explore the connections between differentially private Bayesian
+inference mechanisms, in terms of utility and privacy, under different restrictions and different accuracy measurements (KL divergence, the Hellinger
+distance, $l_k$ norm, etc.) over posterior distributions.
+%
+%
+
+This project builds on some recent surprising works (\cite{ghosh2012universally}, \cite{zhang2016differential}) showing the optimality of differentially private Bayesian inference under specific restrictions. This line of work shows that when Bayesian inference is developed under a specific model in a certain differentially private way, the utility can achieve the optimality amount all kinds of privacy protection methods.
+Thus the technique core of this project is to study the connections between these optimizations. 
+Especially, there are many other works (\cite{bernstein2019differentially}) on differentially private Bayesian inference that haven't shown optimality.   
+From the fundamental perspective, this project study their common utility properties.
+%
+\paragraph{Proposed Contributions.}
+This project will systemically study existing differentially private Bayesian inference works in terms of their pre-assumptions/restrictions, structures, utilities and privacy.
+
+\begin{itemize}
+	\item Summary of existing structures of differentially private Bayesian inference works under different specifications.
+%
+	\item New study of the connections between utility optimality of different differentially private Bayesian inference structures. 
+%	
+	\item New study on the fundamental of the utility over all differential kind of the differentially private Bayesian inference.
+%
+\end{itemize}
+
+\paragraph{Broader Impact.} The summary of existing structures of DP-Bayesian inference works can help to develop some fundamental frameworks in this line. Then, the study of the connections between different utility optimality, and their common utility properties can help to develop new optimality for some other differentially private Bayesian work that haven't achieve optimality. This project will even build the framework for the differentially private Bayesian inference.
+
+\paragraph{Keywords:} data analysis, Bayesian inference, differential privacy, utility optimization, utility trade-off.
+
+\newpage
+\bibliographystyle{plain}
+\bibliography{main.bib}
+
+
+
+\end{document}
