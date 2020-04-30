@@ -5,7 +5,8 @@
 \begin{document}
 
 \title{
-{\textbf{CS591S1 Homework 2: Main Report}\\
+{\textbf{CS591S1 Project
+: Main Report}\\
 \large{Explore the Utility in Differentially Private Bayesian Inference}}
 }
 \author{Jiawen Liu\\
@@ -13,16 +14,21 @@ Collaborators: none.}
 
 \date{}
 \maketitle
-
+\tableofcontents
+%
+\newpage
+%
 \section{Abstract}
 This project focus on protecting the data privacy in Bayesian analysis process, especially in a differentially private manner.
 It starts from existing literatures, summarized popular differentially private Bayesian inference models and their main results in terms of utility under different problem settings.
 Then this project studied the connections between these differentially private Bayesian inference models,
-and their common utility properties. At the end, 
-
-
+and their common utility properties. At the end, we implemented some algorithms proposed in these literatures and compared their results.
+%
+%
+%
 \paragraph{Keywords:} data analysis, Bayesian inference, differential privacy, utility optimization, utility trade-off.
-
+%
+%
 \section{Introduction.}
 Modern data analysis techniques have enabled significant
 advances in a variety of applications in medicine, finance,
@@ -58,8 +64,7 @@ This project will systemically study existing differentially private Bayesian in
 \end{itemize}
 
 \section{Preliminaries}
-\paragraph{Bayesian Inference}
-\noindent \textbf{Bayesian inference.} 
+\paragraph{Bayesian Inference.}
 Given a prior belief $\Pr(\theta)$ on some parameter $\theta$,
 and an observation $\dataobs$, the posterior distribution on $\theta$
 given $\dataobs$ is defined by Bayes' Theorem as:
@@ -84,7 +89,7 @@ precise or approximate way in the compiler of several
 probabilistic programming languages~\cite{BartheFGAGHS16}.
 %
 %
-\paragraph{Exponential Family}
+\paragraph{Exponential Family.}
 The Bayesian Inference in an exponential family is considered in this project. Given the same setting as above, the exponential family in natural parameterization has density:
 %
 \[
@@ -111,7 +116,7 @@ for some $\lambda'$ that depends only on $\lambda, n$ and the sufficient statist
 %
 Our following research will focus on some specific models in this exponential family. 
 
-\paragraph{Differential Privacy}
+\paragraph{Differential Privacy.}
 %
 %
 \emph{Differential privacy}~\cite{dwork2006} is a quantitative notion
@@ -121,9 +126,8 @@ Formally, the $\epsilon$ parameter
 controls how much two outputs starting from \emph{close} inputs can differ. When two inputs are close we call them \emph{adjacent}.
 By adjacency we usually mean a relation over input databases which includes all the pair of databases which differ by at most one row.
 The formal definition of $\epsilon$-differential privacy follows.
-\begin{definition}
+\begin{defn}
 \label{def_epsilon_dp}
-
 A randomized mechanism $\mathcal{M}$ with domain $\mathbb{N}^{|\mathcal{X}|}$ and codomain $\range$, is $\epsilon$-differential private, if for all adjacent
 \footnote{Given $\dataobs, \dataobs'\in\{0,1\}^n$  we say that $\dataobs$ and $\dataobs'$ are adjacent and we write, iff
 $\sum_{i}^{n}\iverson{x_i = x'_i }\leq 1$. } $\dataobs, \dataobs' \in \mathbb{N}^{|\mathcal{X}|}$ and all $\mathcal{S} \subseteq \range$:
@@ -131,7 +135,7 @@ $\sum_{i}^{n}\iverson{x_i = x'_i }\leq 1$. } $\dataobs, \dataobs' \in \mathbb{N}
 \Pr[\mathcal{M}(\dataobs) \in \mathcal{S}] \leq e^\epsilon \Pr[\mathcal{M}(\dataobs') \in \mathcal{S}].
 \end{equation*}
 
-\end{definition}
+\end{defn}
 
 
 It is possible to achieve $\epsilon$-differential privacy through use and composition of
@@ -209,35 +213,86 @@ This project will study some specific problems and algorithms mainly under this 
 \section{Private Bayesian Inference under Different Problem Settings}
 %
 
-\subsection{For Counting Query \texorpdfstring{\cite{ghosh2012universally}}{}}
+\subsection{Counting Query Model \texorpdfstring{\cite{ghosh2012universally}}{}}
 %
 
 \subsubsection{Problem Setting}
 %
-Following the model in Figure \ref{fig_pinfermodel}(c), this section studied under the setting:
-\begin{itemize}
-\item Data base be a set of bits.
-\item the sufficient statistics are the result of counting queries with integer type.
-\item The noise added to the statistics are integers from geometric distribution.
-\end{itemize}
+Following the model in Figure \ref{fig_pinfermodel}(c), this section studied under the setting: 1) The sufficient statistics are results from counting queries and 2) the randomization mechanism is adding discrete noises to query results by geometric distribution. Below are some formal definitions which will be used in this model.
+
 %
-Below are some formal definitions which will be used in this model.
 %
-\begin{definition}[Counting Query]
-\end{definition}
-
-\begin{definition}[Geometric Mechanism]
-\end{definition}
-
-\begin{definition}[Utility Model]
-\end{definition}
-
-\subsubsection{Equivalence Between Private Inference and Geometric Noise}
+\[
+\begin{array}{lcl}
+	d \in D^n 
+	& : &
+	\mbox{The data base}.\\
+	f : D^n \rightarrow [N]
+	& : & \mbox{the counting query which results are sufficient statistics.}\\
+	\mathcal{A}: [N] \rightarrow R
+	& : & \mbox{the randomization mechanism}\\
+	p_i
+	& : & \mbox{prior probability distribution over the query results } i \in [N]\\
+	l(i; r)
+	& : & \mbox{loss function on query results i and mechanism output r}
+\end{array}
+\]
 %
-For every rational user u,
-the private inference process can be factored into a user-independent part
-(the $\alpha$-geometric mechanism) followed by a user-dependent post-processing step.
+%
+\begin{defn}[Counting Query]
+A count query $f$ takes a database $d \in D^n$ as input and returns the result $f(d) \in N = \{0, \cdots ,n\}$ that is the number of rows that satisfy a fixed, non-trivial predicate on the domain D.
+\end{defn}
+%
+\begin{defn}[$\epsilon$-Geometric Mechanism]
+When the true query result is f(d), the mechanism outputs $f(d)+Z$. Z is a random variable distributed as a two-sided geometric distribution: 
+$Pr[Z = z] = \frac{1 - \epsilon}{1 + \epsilon} \epsilon^{|z|}$
+for every integer $z$. The details of this mechanism is shown in Algorithm \ref{alg_geo}, where $\mathcal{A}: [N] \rightarrow R $.
+%
+\begin{algorithm}
+\caption{$\epsilon$-Geometric Algorithm $\mathcal{A}$}
+\label{alg_geo}
+\begin{algorithmic}
+\REQUIRE database $d \in D^n$.
+\STATE {\bf Initialize} counting queries $f : D^n \rightarrow \{0, \cdots ,n\}$,  privacy budget $\epsilon$.
+\STATE  {\bf let} $i = f(d)$; 
+\STATE  {\bf let} $r = \mathcal{A}(i)$; 
+\COMMENT {$\mathcal{A}(i)$ : $i + (z \leftarrow Geo(\epsilon))$}
+\STATE  \COMMENT{geo mech $\mathcal{A}(i)$ sample a random value $z$ from $\epsilon$-Geometric distribution and added to query result $i$.}
+\RETURN $r$.
+\end{algorithmic}
+\end{algorithm} 
+%
+\end{defn}
+%
+In order to prove the universal optimal, it is necessary to clarify the utility model under which the optimal is achieved.
+Additionally, the utility model is required also to be universally corresponding to the universal optimal. 
+So we have following 3 definition where 
+the \emph{preference} and \emph{side information} are defined firstly in order to model the utility.
+%
+\begin{defn}[preference]
+The preference of user is defined by a loss function: $l(i; r): [N] * R \rightarrow R'$,
+where $i \in [N]$ is the counting query result, $r \in R$ is the result from mechanism $\mathcal{A}$.
+The only constrains on the loss function are nonnegative and nondecreasing in $|i - r|$ for each fixed $i$. 
+\end{defn}
 
+\begin{defn}[side information]
+The side information is simply the prior distribution $q_i$ over the query results $i$.
+\end{defn}
+
+\begin{defn}[Utility Model]
+In order to achieve universally optimality over all potential users, utility model is defined independent
+of \emph{preference} and \emph{side information} as follows:
+\[
+\sum_{i \in [1,\ldots, n]}p_i \sum_{r \in R}
+Pr[\mathcal{A}(i) = r] \cdot l(i;r).
+\]
+which is actually expected loss over the randomness of the mechanism and the prior.
+%
+\end{defn}
+%
+%
+%
+%
 \subsubsection{Main Theorem}
 %
 \begin{thm}
@@ -246,56 +301,298 @@ there is a geometric mechanism
 $M$ that is simultaneously expected loss-minimizing for every possible user,
 subject to the differential privacy constraint.
 \end{thm}
+%
+In order to prove this main theorem, there are following reductions between this problem and other problems:
+\paragraph{Equivalence Between Private Inference and $\epsilon$-Geometric mechanism}
+%
+This equivalence comes from the observation that: the post-processing will only reduce the information loss.
+So we can have following equivalence:
+Every private inference process can be factored into a user-independent ($\epsilon$-geometric mechanism) followed by a user-dependent post-processing step.
+Because the post-processing will only reduce the information loss, 
+therefore it is sufficient to prove the user-independent ($\epsilon$-geometric mechanism) 
+optimal in order to prove any private inference process optimal. 
 
-\subsection{For Linear Regression
+\paragraph{Reduction to Linear Programming Problem}
+Now we only need to care about the user-independent ($\epsilon$-geometric mechanism) and prove its optiamlity. 
+This problem is further reduce to the problem of determining the differentially private mechanism that minimizes expected loss as a solution to a linear program (LP). It is further proved by Lemma \ref{lem:LP_opt}.
+\begin{lem}
+\label{lem:LP_opt}
+Every user-specific LP has an optimal solution that is a vertex.
+\end{lem}
+
+\subsection{InverseGamma-Gaussian Model
 \texorpdfstring{\cite{bernstein2019differentially}}{}}
 %
-
 \subsubsection{Problem Setting}
 %
-Again following the model in Figure \ref{fig_pinfermodel}(c), another popular problem studied under this model is Bayesian linear regression. 
+Again following the model in Figure \ref{fig_pinfermodel}(c), another popular problem studied under this model is Bayesian linear regression in the InverseGamma-Gaussian Model. 
 %
 Below are some formal definitions which will be used in this model.
 
 %
-\begin{definition}[Linear Regression]
-\end{definition}
+\begin{defn}[Linear Regression with InverseGamma-Gaussian Model]
+The linear regression model are defined with:
 
-\begin{definition}[Private Linear Regression Model]
- sufficient-statistic perturbation
-\end{definition}
+The population data: $\dataX \in R^{d \times n}$.
 
-\begin{definition}[Calibration Measures]
-\end{definition}
+The dependent response data: $\datay \in R^{n}$.
 
-\begin{definition}[Utility Measures]
-\end{definition}
+The likelihood model: conditional Gaussian model 
+$\datay \sim \normdis(\vtheta^{T} \dataX, \sigma^2)$,
+where $\vtheta \in R^d$ are the regression coefficients and
+$\sigma^2$ is the error variance.
+
+The point estimation of $\vtheta$: 
+$\hat{\vtheta} = (\dataX^T \dataX)^{-1} \dataX^T \datay$, 
+i.e., the ordinary least solution.
+
+The conjugate prior: $p(\sigma^2) = \text{InverseGamma}(a_0, b_0 )$ 
+and $p(\vtheta | \sigma^2) = \normdis (\vmu_0 , \sigma^2\vLambda_0^{-1})$. 
+The joint distribution are defined as:
+$p(\vtheta, \sigma^2) = NIG(\vmu_0, \sigma^2\vLambda_0^{-1}, a_0, b_0)$.
+
+The posterior: 
+$p(\vtheta, \sigma^2 | \dataX, \datay) = 
+NIG (\vmu_n, \sigma^2\vLambda_n^{-1}, a_n, b_n)$, where 
+$\vmu_n = (\dataX^T \dataX + \vLambda_0)^{-1}
+(\dataX^T \datay + \vmu_0^{T}\vLambda_0)$;
+$\sigma^2\vLambda_n^{-1} = \dataX^T \dataX + \vLambda_0$;
+$a_n = a_0 + \frac{1}{2}n$;
+$b_n = b_0 + \frac{1}{2}(\datay^T\datay 
++ \vmu_0^{T}\vLambda_0 \vmu_0
+- \vmu_n^{T}\vLambda_n \vmu_n)$.
+\end{defn}
+
+\begin{defn}{Sufficient Statistics}
+The sufficient statistics $s$ in this model are:
+\[
+	s := t(\dataX, \datay) = [\dataX^T \dataX, \dataX^T \datay, \datay^T\datay]
+\]
+\end{defn}
+
+\begin{defn}[Private Linear Regression Model]
+Following the sufficient-statistic perturbation model, we have the noisy sufficient statistics for public release are:
+\[
+	\dataz = [z_i = s_i + \lap{\delta_s}{0} : s_i \in s]
+\]
+\end{defn}
+
+
+\begin{defn}[Utility Measures]
+The utility is measured as closeness to the non-private posterior, by maximum mean discrepancy (MMD), a kernel-based statistical test to determine if two sets of samples are drawn from different distributions. It is defined as: given $n$ i.i.d. samples $(p, q) \sim (P \times Q)$, the MMD between distribution of $P$ and $Q$ is
+\[
+	MMD^2(P, Q) = \frac{1}{n(n - 1)}
+	\sum_{i \neq j}^{n}
+	(k(p_i, p_j ) + k(q_i, q_j ) 
+	- k(p_i, q_j ) - k(p_j , q_i)),
+\]
+where $k$ is a standard normal kernel in this paper.
+\end{defn}
 %
 %
 \subsubsection{Main Result}
 %
-The results are shown in experiments.
+Instead of trying to prove optimality on existing algorithms or mechanisms, this work focus on designing algorithms which can produce good posterior distributions and perform sampling with higher accuracy.
+%
 
-\subsection{For Posterior Inference
+The main results are inference algorithms proposed based on publicly released noisy sufficient statistics $\dataz$. 
+It computes a representation of
+$ p(\vtheta, \sigma^2 | \dataz) \propto \int_{s}   p( \vtheta, \sigma^2, s, \dataz) ds$ by integrating over the sufficient statistics $s$.
+
+%
+%
+And the results about utility are shown in experiments measured by MMD defined above.
+
+\subsection{Beta-Binomial Model
 \texorpdfstring{\cite{Zhang2017privbayes}}{}}
+\label{sec_betabi}
 %
 
 \subsubsection{Problem Setting}
 %
-The same counting query as before.
-\begin{definition}[Laplace Mechanism]
-\end{definition}
+This model focus on Bayesian inference with Beta-Binomial distribution.
+%
+Different from previous two models, this model following the second model in Figure \ref{fig_pinfermodel}(b). Instead of working on sufficient statistics, they are working on the data directly and release the private inference result. 
 
-\begin{definition}[Probabilistic Graphical Models]
-\end{definition}
+%
+Below are some formal definitions which will be used in this model.
+
+\begin{defn}[Beta-Binomial Model]
+The Beta-Binomial model is a specific case of Dirichlet-Multinomial model for
+categorical data and its restriction to binary data.
+That is, we will consider the situation where 
+the underlying categorical data is drawn from a multinomial
+distribution with parameter the vector $\vtheta\in [0,1]^{k}$. The prior distribution over $\vtheta$
+is given by a Dirichlet distribution, $\dirichlet{\valpha}$, for,
+$\valpha\in(\mathbb{R}^{+})^{k}$ and $k\in\mathbb{N}$, with p.d.f:
+\[
+\Pr(\vtheta)=\frac{1}{\mbetaf(\valpha)}\cdot\prod_{i=1}^{k}{\theta_i^{\alpha_i-1}}
+\]
+where $\mbetaf(\cdot)$ is the generalized beta function.
+The data $\dataobs$ is a sequence of $n\in\mathbb{N}$ values
+coming from a universe $\datauni$, such that $|\datauni|=k$.
+The likelihood function is
+$
+\Pr(\dataobs|\vtheta)=\prod_{a_i\in\datauni}\theta_{i}^{\Delta \alpha_i},
+$
+with $\Delta \alpha_i=\displaystyle\sum_{j=1}^{n}\mathbf{1}_{\iverson{x_j=a_i}}$.
+Denoting by $\Delta\valpha$ the vector $(\Delta\alpha_1,\dots
+\Delta\alpha_k)$ the posterior distribution over $\vtheta$ is
+$\dirichlet{\valpha + \Delta \valpha}$, where $+$ denotes the component wise sum of vectors.
+In the following we will use the notation $\bysinfer{\valpha,\vtheta,
+\dataobs}$ to denote the posterior of this process.
+The Beta-Binomial model can be obtained from the Dirichlet-Multinomial
+model by fixing $k=2$. 
+\end{defn}
+
+
+\begin{defn}[Laplace Mechanism]
+The Laplace mechanism releases a random number drawn from the Laplace distribution with
+mean $\mu=q(d)$ and scale $\nu$. Where $q$ is a numeric query on a database $d$.
+If $\nu\geq \frac{\Delta_f}{\epsilon}$, with $\Delta_f=\displaystyle\max_{d,d':\adj{d}{d'}}{\lvert f(d_1)-f(d_2)\lvert}$
+then the mechanism is $\epsilon$-differentially private.
+\end{defn}
+
+
 \subsubsection{Main Theorem}
+The details of their algorithm are defined in Algorithm \ref{alg:lapmech}:
+%
+\begin{algorithm}
+  \caption{Laplace Mechanism based Differentially Private Bayesian Inference}
+  \label{alg:lapmech}
+  \begin{algorithmic}
+  \STATE $\dataobs\in\mathcal{X}^n$, $\dirichlet{\valpha}$
+  \STATE \quad {\bf let} $\valpha' = \inferd{\valpha}{\vtheta}{\dataobs}$
+  \STATE \quad {\bf Initialize} a vector $\tilde{\valpha} = (0, \dots, 0 )\in \mathbb{N}^{|\mathcal{X}|}$ 
+  \STATE \quad {\bf For} $i = 1 \dots |\mathcal{X}| - 1$:
+  \STATE \quad \quad  {\bf let} $\tilde{\alpha_i}=\alpha_i + \lfloor{(\alpha_i' - \alpha_i)+ \lap{0}{\frac{2}{\epsilon}} }\rfloor^n_0$
+  \STATE {\bf return} $\tilde{\valpha}$
+  \end{algorithmic}
+\end{algorithm}
+%
+\\
+The utility is measured as the distance to the true posterior, by KL-divergence. 
 \begin{thm}[Utility Bounds on Posterior]
+The loss of utility measured by KL-divergence is no more than:
+\[
+	\mathcal{O}(2n\ln n)\big[ 1 - \exp(-n\epsilon / 2) \big] + \sqrt{-\mathcal{O}(2 n \ln n) \ln \delta},
+\]
+with probability at least $1 - \delta$.
 \end{thm}
 %
 %
 \section{Connections Between Different Models}
+The three models summarized above are focus on 3 different aspects of the problem:
+\begin{enumerate} 
+\item Given the specific counting query and geometric-mechanism, this paper focus on proving the utility optimality by 
+1) mapping all possible private mechanism onto this mechanism and 2) then reducing it to a LP problem.
+%
+\item Given the differentially private sufficient statistics are released publicly, 
+the second model focus on designing inference algorithm based on the released sufficient statistics. 
+By adopting different approximating ways, they design inference algorithm producing posterior closer to the true posterior.
+%
+\item The third work is developed under the second private Bayesian inference model (Figure \ref{fig_pinfermodel}(b)) different from the other two works.
+They actually performed a naive inference by ignoring the noise added to statistics.
+However, can we adopt this problem in the private Bayesian inference over sufficient statistics model (Figure \ref{fig_pinfermodel}(c))?
+This gives me the next section.
+\end{enumerate}
 
-\section{Experimental Results}
+Additionally, the utilities in the three models are also evaluated in 3 different ways as well as the optimality:
+\begin{enumerate} 
+\item Only the first counting query model proved the optimality,
+by reducing to the famous LP problem and showing the existence of optimal solution.
+%
+\item The utility in the second linear regression model are only studied by experiments. 
+The experimental results shown that their noisy aware inference based on sufficient statistics have the best utility.
+They didn't prove the optimal formally but we can still say they are the existing optimal private Bayesian linear regression algorithm.
+%
+\item In the third model, the Beta-Binomial model, the utilities are given by utility bound. That is not optimal but we can also say that if no better utility bound, this is the existing optimal bound.
+\end{enumerate}
+%
+
+Either experimentally showing the optimal \cite{bernstein2019differentially} or 
+theoretically giving the utility bound \cite{zhang2016differential} doesn't guarantee the optimal of an algorithm or mechanism.
+Both of the two algorithms give room for improvement.
+
+However, the first model indeed proved the optimality and gave no room for improvement.
+
+Can we adopt the work in \cite{bernstein2019differentially}, \cite{zhang2016differential}
+in the framework of the counting query model?
+This gives me the following sections.
+
+%
+
+\section{Beta-Binomial Model V.S. Counting Querying Model}
+In order to shown the Beta-Binomial model and Laplace mechanism shown in Section \ref{sec_betabi} can be 
+formalized into the counting querying model, we need to shown following mapping:
+\[
+	\begin{array}{lcl}
+	\Delta \alpha : \#\{i |x_i = 1\}
+	& \Rightarrow &
+	f:\{0, 1\}^d \rightarrow [N] \mbox{: the counting query}\\
+	\lfloor \lap(2/\epsilon, 0) \rfloor_0^{n}
+	& ? &
+	geo(\epsilon) \mbox{: the geometric mechanism}\\
+	beta(\alpha, \beta)
+	& \Rightarrow &
+	p_{i} \mbox{: the prior distribution over the query result (i.e., $\#\{i |x_i = 1\}$) }\\
+	KL(P, Q)
+	& \Rightarrow &
+	l(i; r) \mbox{: the loss function.}
+	\end{array}
+\]
+If the mapping from $\lfloor \lap(2/\epsilon, 0) \rfloor_0^{n}$ to $geo(\epsilon) $ holds, then we can have the mapping from the Beta-Binomial model onto the counting query model.
+Consequently, 
+it indirectly proved that the Laplace algorithm \ref{alg:lapmech} is optimal in this model.
+
+By the p.d.f. of Laplace distribution, we have following probability function:
+\[
+	Pr[\lfloor \lap(2/\epsilon, 0) \rfloor_0^{n} = z]
+	= \frac{1}{2}(1 - e^{-z/\epsilon} - e^{-z/\epsilon}).
+\]
+It is obviously that $\lfloor \lap(2/\epsilon, 0) \rfloor_0^{n}$ have different probability distribution as $geo(\epsilon)$.
+i.e., the Beta-Binomial model with Laplace mechanism cannot be reduce to the counting query model with optimal Geometric mechanism.
+
+However, it is still possible we can adopt the Geometric mechanism into the Beta-Binomial model as shown in Algorithm \ref{alg:betabi_geomech}.
+
+\begin{algorithm}
+  \caption{Laplace Mechanism based Differentially Private Bayesian Inference}
+  \label{alg:betabi_geomech}
+  \begin{algorithmic}
+  \STATE $\dataobs\in\mathcal{X}^n$, $\dirichlet{\valpha}$
+  \STATE \quad {\bf let} $\valpha' = \inferd{\valpha}{\vtheta}{\dataobs}$
+  \STATE \quad {\bf Initialize} a vector $\tilde{\valpha} = (0, \dots, 0 )\in \mathbb{N}^{|\mathcal{X}|}$ 
+  \STATE \quad {\bf For} $i = 1 \dots |\mathcal{X}| - 1$:
+  \STATE \quad \quad  {\bf let} $\tilde{\alpha_i}=\alpha_i + \lfloor{(\alpha_i' - \alpha_i)+ geo(\epsilon) }\rfloor^n_0$
+  \STATE {\bf return} $\tilde{\valpha}$
+  \end{algorithmic}
+\end{algorithm}
+%
+
+Experimental results shown in Figure \ref{fig_geovslap} verified that adding Laplace noise is not as good as adding Geometric noise.  
+\begin{figure*}[t!]
+    \centering
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[height=1.2in]{datasize.png}
+        \caption{Utility V.S. Different Data Sizes $n$, given $\epsilon = 0.1$}
+    \end{subfigure}%
+    ~ 
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[height=1.2in]{eps_size200}
+        \caption{Utility V.S. Different $\epsilon$ given data size $n = 200$}
+    \end{subfigure}
+    ~ 
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[height=1.2in]{eps_size1000}
+        \caption{Utility V.S. Different $\epsilon$ given data size $n = 1000$}
+    \end{subfigure}
+    \caption{Utility of two different models}
+    \label{fig_geovslap}
+\end{figure*}
+%
 
 \section{Conclusion}
 The summary of existing structures of DP-Bayesian inference works can help to develop some fundamental frameworks in this line. Then, the study of the connections between different utility optimality, and their common utility properties can help to develop new optimality for some other differentially private Bayesian work that haven't achieve optimality. This project will even build the framework for the differentially private Bayesian inference.
