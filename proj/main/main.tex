@@ -2,6 +2,8 @@
 % \input{prelude}
 
 \input{prelude}
+\usepackage[T1]{fontenc}
+
 \begin{document}
 
 \title{
@@ -15,11 +17,11 @@ Collaborators: none.}
 \date{}
 \maketitle
 \tableofcontents
-%
+%   
 \newpage
 %
 \section{Abstract}
-This project focus on protecting the data privacy in Bayesian analysis process, especially in a differentially private manner.
+This project focuses on protecting the data privacy in Bayesian analysis process, especially in a differentially private manner.
 It starts from existing literatures, summarized popular differentially private Bayesian inference models and their main results in terms of utility under different problem settings.
 Then this project studied the connections between these differentially private Bayesian inference models,
 and their common utility properties. At the end, we implemented some algorithms proposed in these literatures and compared their results.
@@ -36,17 +38,19 @@ social science, and transportation. Privacy risk occurs when individual users co
 services, these applications need large amounts of users’ data. 
 Differential privacy was proposed a decade ago to address privacy concerns in these situations, and is now the standard for privacy-preserving data analysis.
 While the privacy is always achieved at the expense of sacrificing utility, the trade-off between privacy and utility comes to the light.
-Since most of the statistical applications are driven by Bayesian inference, this project will focus on the utility and privacy for differentially private Bayesian inferences, especially on inference tasks based on two classical statistical models: the Beta-Binomial model and Linear regression model.
+Since most of the statistical applications are driven by Bayesian inference, this project will focus on the utility and privacy for differentially private Bayesian inferences.
 This is a standard statistical tool in which a prior distribution is combined
 with a sample of observed data in order to estimate a new posterior distribution.
 
 The goal of this project is to explore the connections between differentially private Bayesian
-inference mechanisms, in terms of utility and privacy, under different restrictions and different accuracy measurements (KL divergence, the Hellinger
+inference models, in terms of utility and privacy, under different restrictions and different accuracy measurements (KL divergence, the Hellinger
 distance, $l_k$ norm, etc.) over posterior distributions.
 %
 %
 
-This project builds on some recent surprising works (\cite{ghosh2012universally}, \cite{zhang2016differential}, \cite{bernstein2020noise}) showing the optimality of differentially private Bayesian inference under specific restrictions. This line of work shows that when Bayesian inference is developed under a specific model in a certain differentially private way, the utility can achieve the optimality amount all kinds of privacy protection methods.
+This project builds on some recent surprising works (\cite{ghosh2012universally}, \cite{zhang2016differential}, \cite{bernstein2020noise}) showing the optimality of differentially private Bayesian inference under specific restrictions. 
+In this line of work, some proved the best known utility bound and some others proved the universally optimal.
+% 
 Thus the technique core of this project is to study the connections between these optimizations. 
 Especially, there are many other works (\cite{bernstein2019differentially}) on differentially private Bayesian inference that haven't shown optimality.   
 From the fundamental perspective, this project study their common utility properties.
@@ -57,9 +61,9 @@ This project will systemically study existing differentially private Bayesian in
 \begin{itemize}
 	\item Summary of existing structures of differentially private Bayesian inference works under different specifications.
 %
-	\item New study of the connections between utility optimality of different differentially private Bayesian inference structures. 
+	\item Discussion of the connections between utility optimality of different differentially private Bayesian inference structures. 
 %	
-	\item New study on the fundamental of the utility over all differential kind of the differentially private Bayesian inference.
+	\item Extension of one existing model onto another model and experimental results.
 %
 \end{itemize}
 
@@ -116,30 +120,30 @@ for some $\lambda'$ that depends only on $\lambda, n$ and the sufficient statist
 %
 Our following research will focus on some specific models in this exponential family. 
 
-\paragraph{Differential Privacy.}
-%
-%
-\emph{Differential privacy}~\cite{dwork2006} is a quantitative notion
-of data privacy guaranteeing  a bound on the that changing the input of a mechanism slightly only reflects
-in a controlled and bounded way on the output distribution. 
-Formally, the $\epsilon$ parameter
-controls how much two outputs starting from \emph{close} inputs can differ. When two inputs are close we call them \emph{adjacent}.
-By adjacency we usually mean a relation over input databases which includes all the pair of databases which differ by at most one row.
-The formal definition of $\epsilon$-differential privacy follows.
-\begin{defn}
-\label{def_epsilon_dp}
-A randomized mechanism $\mathcal{M}$ with domain $\mathbb{N}^{|\mathcal{X}|}$ and codomain $\range$, is $\epsilon$-differential private, if for all adjacent
-\footnote{Given $\dataobs, \dataobs'\in\{0,1\}^n$  we say that $\dataobs$ and $\dataobs'$ are adjacent and we write, iff
-$\sum_{i}^{n}\iverson{x_i = x'_i }\leq 1$. } $\dataobs, \dataobs' \in \mathbb{N}^{|\mathcal{X}|}$ and all $\mathcal{S} \subseteq \range$:
-\begin{equation*}
-\Pr[\mathcal{M}(\dataobs) \in \mathcal{S}] \leq e^\epsilon \Pr[\mathcal{M}(\dataobs') \in \mathcal{S}].
-\end{equation*}
+% \paragraph{Differential Privacy.}
+% %
+% %
+% \emph{Differential privacy}~\cite{dwork2006} is a quantitative notion
+% of data privacy guaranteeing  a bound on the that changing the input of a mechanism slightly only reflects
+% in a controlled and bounded way on the output distribution. 
+% Formally, the $\epsilon$ parameter
+% controls how much two outputs starting from \emph{close} inputs can differ. When two inputs are close we call them \emph{adjacent}.
+% By adjacency we usually mean a relation over input databases which includes all the pair of databases which differ by at most one row.
+% The formal definition of $\epsilon$-differential privacy follows.
+% \begin{defn}
+% \label{def_epsilon_dp}
+% A randomized mechanism $\mathcal{M}$ with domain $\mathbb{N}^{|\mathcal{X}|}$ and codomain $\range$, is $\epsilon$-differential private, if for all adjacent
+% \footnote{Given $\dataobs, \dataobs'\in\{0,1\}^n$  we say that $\dataobs$ and $\dataobs'$ are adjacent and we write, iff
+% $\sum_{i}^{n}\iverson{x_i = x'_i }\leq 1$. } $\dataobs, \dataobs' \in \mathbb{N}^{|\mathcal{X}|}$ and all $\mathcal{S} \subseteq \range$:
+% \begin{equation*}
+% \Pr[\mathcal{M}(\dataobs) \in \mathcal{S}] \leq e^\epsilon \Pr[\mathcal{M}(\dataobs') \in \mathcal{S}].
+% \end{equation*}
 
-\end{defn}
+% \end{defn}
 
 
-It is possible to achieve $\epsilon$-differential privacy through use and composition of
-a few basic components. Some of these components are now reviewed.
+% It is possible to achieve $\epsilon$-differential privacy through use and composition of
+% a few basic components. Some of these components are now reviewed.
 %
 %
 \section{Differentially Private Bayesian Inference Models}
@@ -169,7 +173,8 @@ This section introduced three kind of differentially private Bayesian inference 
 \end{figure*}
 \subsection{Non-private Inference}
 %
-As shown in Figure \ref{fig_pinfermodel}(a), the non-private inference graph start from the hyper parameter following the Bayesian inference process in exponential family.
+As shown in Figure \ref{fig_pinfermodel}(a), the non-private inference graph starts
+from the hyper-parameter following by the Bayesian inference process in exponential family.
 %
 Then it will directly release the full data without any manipulation on data.
 
@@ -218,8 +223,14 @@ This project will study some specific problems and algorithms mainly under this 
 
 \subsubsection{Problem Setting}
 %
-Following the model in Figure \ref{fig_pinfermodel}(c), this section studied under the setting: 1) The sufficient statistics are results from counting queries and 2) the randomization mechanism is adding discrete noises to query results by geometric distribution. Below are some formal definitions which will be used in this model.
-
+Following the model in Figure \ref{fig_pinfermodel}(c), this section studied under the setting: 
+1) The sufficient statistics are results from counting queries and 
+2) the randomization mechanism of releasing the noisy statistics
+is adding discrete noises to query results by geometric distribution. 
+There is no specific restriction on the inference model after the release of sufficient statistics.
+%
+Below are some formal definitions which will be used in this model.
+%
 %
 %
 \[
@@ -228,13 +239,13 @@ Following the model in Figure \ref{fig_pinfermodel}(c), this section studied und
 	& : &
 	\mbox{The data base}.\\
 	f : D^n \rightarrow [N]
-	& : & \mbox{the counting query which results are sufficient statistics.}\\
+	& : & \mbox{the counting query, It's result is a sufficient statistic.}\\
 	\mathcal{A}: [N] \rightarrow R
 	& : & \mbox{the randomization mechanism}\\
 	p_i
 	& : & \mbox{prior probability distribution over the query results } i \in [N]\\
 	l(i; r)
-	& : & \mbox{loss function on query results i and mechanism output r}
+	& : & \mbox{loss function $l$, over query results $i$ and mechanism output $r$}
 \end{array}
 \]
 %
@@ -244,8 +255,8 @@ A count query $f$ takes a database $d \in D^n$ as input and returns the result $
 \end{defn}
 %
 \begin{defn}[$\epsilon$-Geometric Mechanism]
-When the true query result is f(d), the mechanism outputs $f(d)+Z$. Z is a random variable distributed as a two-sided geometric distribution: 
-$Pr[Z = z] = \frac{1 - \epsilon}{1 + \epsilon} \epsilon^{|z|}$
+When the true query result is $f(d)$, the mechanism outputs $f(d)+Z$. Z is a random variable distributed as a two-sided geometric distribution: 
+$Pr[Z = z] = \frac{1 - e^{-\epsilon}}{1 + e^{-\epsilon}} e^{-\epsilon|z|}$
 for every integer $z$. The details of this mechanism is shown in Algorithm \ref{alg_geo}, where $\mathcal{A}: [N] \rightarrow R $.
 %
 \begin{algorithm}
@@ -264,8 +275,7 @@ for every integer $z$. The details of this mechanism is shown in Algorithm \ref{
 %
 \end{defn}
 %
-In order to prove the universal optimal, it is necessary to clarify the utility model under which the optimal is achieved.
-Additionally, the utility model is required also to be universally corresponding to the universal optimal. 
+In order to prove the universal optimal, it is necessary to clarify the utility model under which the optimal is achieved. 
 So we have following 3 definition where 
 the \emph{preference} and \emph{side information} are defined firstly in order to model the utility.
 %
@@ -276,7 +286,7 @@ The only constrains on the loss function are nonnegative and nondecreasing in $|
 \end{defn}
 
 \begin{defn}[side information]
-The side information is simply the prior distribution $q_i$ over the query results $i$.
+The side information is simply the prior distribution $p_i$ over the query results $i$.
 \end{defn}
 
 \begin{defn}[Utility Model]
@@ -295,7 +305,7 @@ which is actually expected loss over the randomness of the mechanism and the pri
 %
 \subsubsection{Main Theorem}
 %
-\begin{thm}
+\begin{thm}[\cite{ghosh2012universally}]
 for each fixed count query and differential privacy level,
 there is a geometric mechanism 
 $M$ that is simultaneously expected loss-minimizing for every possible user,
@@ -314,10 +324,32 @@ optimal in order to prove any private inference process optimal.
 
 \paragraph{Reduction to Linear Programming Problem}
 Now we only need to care about the user-independent ($\epsilon$-geometric mechanism) and prove its optiamlity. 
-This problem is further reduce to the problem of determining the differentially private mechanism that minimizes expected loss as a solution to a linear program (LP). It is further proved by Lemma \ref{lem:LP_opt}.
-\begin{lem}
+This problem is further reduce
+the problem of determining the differentially private mechanism that minimizes expected loss
+as a solution to a linear program (LP) as following. It is further proved by Lemma \ref{lem:LP_opt} that there is always a optimal solution to this LP problem.
+%
+\[
+    \begin{array}{rl}
+    \mbox{minimize} 
+    & \sum_{i \in [1,\ldots, n]}p_i \sum_{r \in R}
+    Pr[\mathcal{A}(i) = r] \cdot l(i;r)\\
+    Pr[\mathcal{A}(i) = r]  
+    - e^{\epsilon}Pr[\mathcal{A}(i + 1) = r] \geq 0
+    & \forall r \in N \setminus {n}, i \in N\\
+    Pr[\mathcal{A}(i + 1) = r]  
+    - e^{\epsilon}Pr[\mathcal{A}(i) = r] \leq 0
+    & \forall r \in N \setminus {n}, i \in N\\
+    \sum_{r \in R}
+    Pr[\mathcal{A}(i) = r] = 1
+    & \forall i \in N\\
+    Pr[\mathcal{A}(i) = r] \geq 0
+    & \forall r \in N \setminus {n}, i \in N\\    
+    \end{array}
+\]
+%
+\begin{lem}[\cite{ghosh2012universally}]
 \label{lem:LP_opt}
-Every user-specific LP has an optimal solution that is a vertex.
+Every user-specific LP (reduced from mechanisms determination as above) has an optimal solution that is a vertex.
 \end{lem}
 
 \subsection{InverseGamma-Gaussian Model
@@ -461,12 +493,11 @@ The details of their algorithm are defined in Algorithm \ref{alg:lapmech}:
   \caption{Laplace Mechanism based Differentially Private Bayesian Inference}
   \label{alg:lapmech}
   \begin{algorithmic}
-  \STATE $\dataobs\in\mathcal{X}^n$, $\dirichlet{\valpha}$
-  \STATE \quad {\bf let} $\valpha' = \inferd{\valpha}{\vtheta}{\dataobs}$
-  \STATE \quad {\bf Initialize} a vector $\tilde{\valpha} = (0, \dots, 0 )\in \mathbb{N}^{|\mathcal{X}|}$ 
-  \STATE \quad {\bf For} $i = 1 \dots |\mathcal{X}| - 1$:
-  \STATE \quad \quad  {\bf let} $\tilde{\alpha_i}=\alpha_i + \lfloor{(\alpha_i' - \alpha_i)+ \lap{0}{\frac{2}{\epsilon}} }\rfloor^n_0$
-  \STATE {\bf return} $\tilde{\valpha}$
+  \STATE $\dataobs\in\mathcal{X}^n$, $Beta(a, b)$
+  \STATE \quad {\bf let} $(a', b') = (\#\{i | x_i = 1\}, \#\{i | x_i = 0\})$, 
+  \STATE \quad  {\bf let} $\tilde{a} = a + \lfloor{(a' - a)+ \lap{0}{\frac{2}{\epsilon}} }\rfloor^n_0$,
+  $\tilde{b} = b + \lfloor{(b' - b)+ \lap{0}{\frac{2}{\epsilon}} }\rfloor^n_0$.
+  \STATE {\bf return} $(\tilde{a}, \tilde{b})$
   \end{algorithmic}
 \end{algorithm}
 %
@@ -482,7 +513,7 @@ with probability at least $1 - \delta$.
 %
 %
 \section{Connections Between Different Models}
-The three models summarized above are focus on 3 different aspects of the problem:
+The three models summarized above focus on 3 different aspects of the problem:
 \begin{enumerate} 
 \item Given the specific counting query and geometric-mechanism, this paper focus on proving the utility optimality by 
 1) mapping all possible private mechanism onto this mechanism and 2) then reducing it to a LP problem.
@@ -503,19 +534,20 @@ Additionally, the utilities in the three models are also evaluated in 3 differen
 by reducing to the famous LP problem and showing the existence of optimal solution.
 %
 \item The utility in the second linear regression model are only studied by experiments. 
-The experimental results shown that their noisy aware inference based on sufficient statistics have the best utility.
+The experimental results shown that their noisy aware inference based on sufficient statistics
+have the best utility among all private linear regression algorithms.
 They didn't prove the optimal formally but we can still say they are the existing optimal private Bayesian linear regression algorithm.
 %
-\item In the third model, the Beta-Binomial model, the utilities are given by utility bound. That is not optimal but we can also say that if no better utility bound, this is the existing optimal bound.
+\item In the third work with the Beta-Binomial inference model, the utilities are given by utility bound. This utility bound in terms of KL-divergence is the best know bound for Laplace mechanism.
 \end{enumerate}
 %
 
-Either experimentally showing the optimal \cite{bernstein2019differentially} or 
-theoretically giving the utility bound \cite{zhang2016differential} doesn't guarantee the optimal of an algorithm or mechanism.
-Both of the two algorithms give room for improvement.
-
+Although the third work theoretically gave the best known utility bound \cite{zhang2016differential}.
+This cannot guarantee there is no algorithm or mechanism having better utility.
+This gives us room for improvement. 
+%
 However, the first model indeed proved the optimality and gave no room for improvement.
-
+%
 Can we adopt the work in \cite{bernstein2019differentially}, \cite{zhang2016differential}
 in the framework of the counting query model?
 This gives me the following sections.
@@ -538,38 +570,41 @@ formalized into the counting querying model, we need to shown following mapping:
 	p_{i} \mbox{: the prior distribution over the query result (i.e., $\#\{i |x_i = 1\}$) }\\
 	KL(P, Q)
 	& \Rightarrow &
-	l(i; r) \mbox{: the loss function.}
+	l(i; r) \mbox{: the loss function (symmetric and non-increasing w.r.t. $|i - r|$).}
 	\end{array}
 \]
-If the mapping from $\lfloor \lap(2/\epsilon, 0) \rfloor_0^{n}$ to $geo(\epsilon) $ holds, then we can have the mapping from the Beta-Binomial model onto the counting query model.
+If the mapping from $\lfloor \lap{0}{2/\epsilon} \rfloor_0^{n}$ to $\lfloor geo(\epsilon) \rfloor_0^{n}$ holds,
+then we can have the mapping from the Beta-Binomial model onto the counting query model.
 Consequently, 
 it indirectly proved that the Laplace algorithm \ref{alg:lapmech} is optimal in this model.
 
 By the p.d.f. of Laplace distribution, we have following probability function:
 \[
-	Pr[\lfloor \lap(2/\epsilon, 0) \rfloor_0^{n} = z]
-	= \frac{1}{2}(1 - e^{-z/\epsilon} - e^{-z/\epsilon}).
+	Pr[\lfloor \lap{0}{2/\epsilon} \rfloor_0^{n} = z]
+	= \frac{1}{2}(e^{-z\epsilon /2} - e^{-(z + 1)\epsilon / 2}).
 \]
-It is obviously that $\lfloor \lap(2/\epsilon, 0) \rfloor_0^{n}$ have different probability distribution as $geo(\epsilon)$.
-i.e., the Beta-Binomial model with Laplace mechanism cannot be reduce to the counting query model with optimal Geometric mechanism.
+It is obviously that $\lfloor \lap(2/\epsilon, 0) \rfloor_0^{n}$ have different probability distribution as $\lfloor Geo(\epsilon) \rfloor_0^{n}$ 
+($Pr[\lfloor Geo(\epsilon) \rfloor_0^{n} = z] = 
+\frac{1 - e^{-\epsilon}}{1 + e^{-\epsilon}} e^{-\epsilon|z|}$).
+i.e., the Beta-Binomial model with Laplace mechanism cannot be fully reduce to the counting query model 
+with optimal Geometric mechanism.
 
-However, it is still possible we can adopt the Geometric mechanism into the Beta-Binomial model as shown in Algorithm \ref{alg:betabi_geomech}.
+However, it is still possible we can adopt the Geometric mechanism into the Beta-Binomial model as shown in Algorithm \ref{alg:betabi_geomech}, by simply substituting the Laplace noise with the Geometric noise.
 
 \begin{algorithm}
-  \caption{Laplace Mechanism based Differentially Private Bayesian Inference}
+  \caption{Geometric Mechanism based Differentially Private Bayesian Inference}
   \label{alg:betabi_geomech}
   \begin{algorithmic}
-  \STATE $\dataobs\in\mathcal{X}^n$, $\dirichlet{\valpha}$
-  \STATE \quad {\bf let} $\valpha' = \inferd{\valpha}{\vtheta}{\dataobs}$
-  \STATE \quad {\bf Initialize} a vector $\tilde{\valpha} = (0, \dots, 0 )\in \mathbb{N}^{|\mathcal{X}|}$ 
-  \STATE \quad {\bf For} $i = 1 \dots |\mathcal{X}| - 1$:
-  \STATE \quad \quad  {\bf let} $\tilde{\alpha_i}=\alpha_i + \lfloor{(\alpha_i' - \alpha_i)+ geo(\epsilon) }\rfloor^n_0$
-  \STATE {\bf return} $\tilde{\valpha}$
+  \STATE $\dataobs\in\mathcal{X}^n$, $Beta(a, b)$
+  \STATE \quad {\bf let} $(a', b') = (\#\{i | x_i = 1\}, \#\{i | x_i = 0\})$, 
+  \STATE \quad  {\bf let} $\tilde{a} = a + \lfloor{(a' - a)+ Geo({\epsilon}) }\rfloor^n_0$,
+  $\tilde{b} = b + \lfloor{(b' - b)+ Geo({{\epsilon}}) }\rfloor^n_0$.
+  \STATE {\bf return} $(\tilde{a}, \tilde{b})$
   \end{algorithmic}
 \end{algorithm}
 %
 
-Experimental results shown in Figure \ref{fig_geovslap} verified that adding Laplace noise is not as good as adding Geometric noise.  
+I compared the two algorithms by experiments. The experimental results shown in Figure \ref{fig_geovslap} verified that adding Laplace noise is not as good as adding Geometric noise. Code is available in appendix as well as github repository: \url{https://github.com/jiawenliu/CS591S1.git}.  
 \begin{figure*}[t!]
     \centering
     \begin{subfigure}[t]{0.3\textwidth}
@@ -596,6 +631,11 @@ Experimental results shown in Figure \ref{fig_geovslap} verified that adding Lap
 
 \section{Conclusion}
 The summary of existing structures of DP-Bayesian inference works can help to develop some fundamental frameworks in this line. Then, the study of the connections between different utility optimality, and their common utility properties can help to develop new optimality for some other differentially private Bayesian work that haven't achieve optimality. This project will even build the framework for the differentially private Bayesian inference.
+
+\section*{Appendix}
+Code is available also in github \url{https://github.com/jiawenliu/CS591S1.git}.
+
+\input{code}
 
 
 \newpage

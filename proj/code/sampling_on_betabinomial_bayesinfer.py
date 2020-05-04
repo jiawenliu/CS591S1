@@ -16,12 +16,6 @@ from dirichlet import dirichlet
 from dpbayesinfer_Betabinomial import BayesInferwithDirPrior
 
 
-
-#############################################################################
-#PLOT THE SAMPLING RESULTS BY 4-QUANTILE BOX PLOTS
-############################################################################
-
-
 #############################################################################
 #PLOT THE MEAN SAMPLING RESULTS IN SCATTER 
 #############################################################################
@@ -59,27 +53,15 @@ def accuracy_VS_datasize(epsilon,delta,prior,observations,datasizes):
 		for j in range(len(mean_error)):
 			mean_error[j].append(Bayesian_Model._accuracy_mean[Bayesian_Model._keys[j]])
 
-		# data.append(Bayesian_Model._accuracy[Bayesian_Model._keys[3]])
-		# data.append(Bayesian_Model._accuracy[Bayesian_Model._keys[0]])
-		# data.append(Bayesian_Model._accuracy[Bayesian_Model._keys[4]])
-		# a = statistics.median(Bayesian_Model._accuracy[Bayesian_Model._keys[3]])
-		# b = statistics.median(Bayesian_Model._accuracy[Bayesian_Model._keys[0]])
-		# c = statistics.median(Bayesian_Model._accuracy[Bayesian_Model._keys[4]])
-
-
 	print('Accuracy / prior: ' + str(prior._alphas) + ", delta: " 
 		+ str(delta) + ", epsilon:" + str(epsilon))
 
-	# print mean_error
 
 	plot_mean_error(datasizes, mean_error, datasizes, 
 		"Different Datasizes", 
 		[r"$Laplace Noise$",
 		r"$Geomoetric Noise$"], "")
 	
-	# plot_error_box(data,"Different Datasizes",datasizes,"Accuracy VS. Data Size",
-	# 	[r'$\mathcal{M}^{B}_{\mathcal{H}}$',"LapMech (sensitivity = 2)", "LapMech (sensitivity = 3)"],
-	# 	['lightblue', 'navy', 'red'])
 	return
 
 
@@ -138,7 +120,7 @@ if __name__ == "__main__":
 #############################################################################
 #SETTING UP THE PARAMETERS WHEN DOING GROUPS EXPERIMENTS
 #############################################################################
-	epsilons = list(numpy.arange(0.01, 0.1, 0.01)) + list(numpy.arange(0.1, 0.5, 0.05))
+	epsilons = list(numpy.arange(0.01, 0.1, 0.01))# + list(numpy.arange(0.1, 0.5, 0.05))
 	datasizes = gen_datasizes((10,50),10) + gen_datasizes((100,500),100) + gen_datasizes((600,1000),200)# + gen_datasizes((1000,5000),1000)#[300] #[8,12,18,24,30,36,42,44,46,48]#,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80]
 	percentage = [0.5,0.5]
 	datasets = gen_datasets(percentage, datasizes)

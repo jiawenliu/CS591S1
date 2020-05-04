@@ -73,7 +73,7 @@ class BayesInferwithDirPrior(object):
 		self._laplaced_posterior = dirichlet(noised) + self._prior
 
 	def _laplace_mechanism_geo(self):
-		noised = [i + math.floor(numpy.random.geometric(self._epsilon)) for i in self._observation_counts]
+		noised = [i + numpy.random.geometric(numpy.exp(-self._epsilon)) for i in self._observation_counts]
 		noised = [self._sample_size if i > self._sample_size else 0.0 if i < 0.0 else i for i in noised]
 
 		self._laplaced_geo_posterior = dirichlet(noised) + self._prior
@@ -86,9 +86,6 @@ class BayesInferwithDirPrior(object):
 	def _experiments(self, times):
 		self._set_up_naive_lap_mech()
 		self._set_up_geo_lap_mech()
-
-
-
 
 		for i in range(times):
 			#############################################################################
@@ -133,15 +130,6 @@ class BayesInferwithDirPrior(object):
 		print self._observation
 		print "The observed counting data is: "
 		print self._observation_counts
-
-	def _show_VS(self):
-		print "The varying sensitivity for every candidate is:"
-		for r in self._candidates:
-			print r._alphas, self._VS[r]
-
-	def _show_exponential(self):
-		print "The posterior distribution under Exponential Mechanism is: "
-		self._exponential_posterior.show()
 
 	def _show_prior(self):
 		print "The prior distribution is: "

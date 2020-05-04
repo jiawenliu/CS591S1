@@ -1,0 +1,347 @@
+
+\begin{lstlisting}[label=code-p1-1, language=Python, caption=Python Code For Beta Distribution Object]
+import random
+import numpy as np
+
+
+def gen_betaln (alphas):
+	numerator=0.0
+	for alpha in alphas:
+		numerator = numerator + gammaln(alpha)
+	return(numerator/math.log(float(sum(alphas))))
+
+
+def opt_hellinger(dirichlet1, dirichlet2):
+	alphas = deepcopy(dirichlet1._alphas)
+	betas = deepcopy(dirichlet2._alphas)
+	z=gen_betaln(numpy.divide(numpy.sum([alphas, betas], axis=0), 2.0))-0.5*(gen_betaln(alphas) + gen_betaln(betas))
+	return (math.sqrt(1-math.exp(z)))
+
+
+
+def L1_Nrom(A, B):
+	return numpy.sum(abs(numpy.array(A._alphas) - numpy.array(B._alphas)))
+
+
+class dirichlet(object):
+	def __init__(self, alphas):
+		self._alphas = alphas
+		self._size = len(alphas)
+
+	def __sub__(self, other):
+		return opt_hellinger(self, other)
+		# return Optimized_Hellinger_Distance_Dir(self, other)
+
+	def _minus(self,other):
+		self._alphas = list(numpy.array(self._alphas) - numpy.array(other._alphas))
+		return self
+
+	def _pointwise_sub(self, other):
+		return dirichlet(list(numpy.array(self._alphas) - numpy.array(other._alphas)))
+
+	def __add__(self, other):
+		return dirichlet(list(numpy.array(self._alphas) + numpy.array(other._alphas)))
+
+	def show(self):
+		print "Dirichlet("+str(self._alphas) + ")"
+
+	def _hellinger_sensitivity(self):
+		LS = 0.0
+		r = deepcopy(self)
+		temp = deepcopy(r._alphas)
+		for i in range(0, self._size-1):
+			temp[i] += 1
+			# print temp
+			for j in range(i + 1, self._size):
+				temp[j] -= 1
+				# print temp
+				if temp[j]<=0:
+					temp[j] += 1
+					continue
+				LS = max(LS, abs(dirichlet(temp) - self))
+				# print r._alphas,self._alphas,temp,(r-self),((temp) - self)
+				temp[j] += 1
+			temp[i] -= 1
+		for i in range(0, self._size-1):
+			temp[i] -= 1
+			if temp[i]<=0:
+					temp[i] += 1
+					continue
+			# print temp
+			for j in range(i + 1, self._size):
+				temp[j] += 1
+				# print temp
+				LS = max(LS, abs(dirichlet(temp) - self))
+				# print r._alphas,self._alphas,temp,(r-self),((temp) - self)
+				temp[j] -= 1
+			temp[i] += 1		
+		return LS
+
+
+	def _score_sensitivity(self, r):
+		LS = 0.0
+		temp = deepcopy(self._alphas)
+		for i in range(0, self._size):
+			temp[i] += 1
+			for j in range(i + 1, self._size):
+				temp[j] -= 1
+				LS = max(LS, abs(-(r - self) + (r - (temp))))
+				temp[j] += 1
+			temp[i] -= 1
+		return LS
+\end{lstlisting}
+
+
+\begin{lstlisting}[label=code-p1-2, language=Python, caption=Python Code For Bayesian Inference Class]
+
+def Hamming_Distance(c1, c2):
+	temp = [abs(a - b) for a,b in zip(c1,c2)]
+	return sum(temp)/2.0
+
+
+class BayesInferwithDirPrior(object):
+	def __init__(self, prior, sample_size, epsilon, delta = 0.0000000001, gamma=1.0):
+		self._prior = prior
+		self._sample_size = sample_size
+		self._epsilon = epsilon
+		self._delta = delta
+		self._gamma = gamma
+		self._bias = numpy.random.dirichlet(self._prior._alphas)
+		self._observation = numpy.random.multinomial(1, self._bias, self._sample_size)
+		self._observation_counts = numpy.sum(self._observation, 0)
+		self._posterior = dirichlet(self._observation_counts) + self._prior
+		self._laplaced_posterior = self._posterior
+		self._laplaced_geo_posterior = self._posterior
+		self._keys = []
+		self._accuracy = {}
+		self._accuracy_mean = {}
+
+	def _set_gamma(self, gamma):
+		self._gamma = gamma
+		
+	def _set_bias(self, bias):
+		self._bias = bias
+		self._update_observation()
+
+	def _set_observation(self,observation):
+		self._observation_counts = observation
+		self._posterior = dirichlet(observation) + self._prior
+
+
+
+	##############################################################################
+	#####SETTING UP THE BASELINE LAPLACE MECHANISM
+	##############################################################################
+
+
+	def _set_up_naive_lap_mech(self):
+		self._keys.append("Laplace Noise")
+		self._accuracy["Laplace Noise"]=[]
+		self._accuracy_mean["Laplace Noise"]=[]
+
+	def _set_up_geo_lap_mech(self):
+		self._keys.append("Geometric Noise")
+		self._accuracy["Geometric Noise"]=[]
+		self._accuracy_mean["Geometric Noise"]=[]
+
+
+	def _laplace_mechanism_naive(self):
+		noised = [i + math.floor(numpy.random.laplace(0, 2.0/self._epsilon)) for i in self._observation_counts]
+		noised = [self._sample_size if i > self._sample_size else 0.0 if i < 0.0 else i for i in noised]
+
+		self._laplaced_posterior = dirichlet(noised) + self._prior
+
+	def _laplace_mechanism_geo(self):
+		noised = [i + math.floor(numpy.random.geometric(self._epsilon)) for i in self._observation_counts]
+		noised = [self._sample_size if i > self._sample_size else 0.0 if i < 0.0 else i for i in noised]
+
+		self._laplaced_geo_posterior = dirichlet(noised) + self._prior
+
+
+#################################################################################
+####EXPERMENTS FRO N TIMES
+#################################################################################
+
+	def _experiments(self, times):
+		self._set_up_naive_lap_mech()
+		self._set_up_geo_lap_mech()
+
+		for i in range(times):
+			###################################################################
+			self._laplace_mechanism_naive()
+			print  "Lap", self._laplaced_posterior._alphas
+			self._accuracy[self._keys[0]].append(self._posterior - self._laplaced_posterior)
+
+			self._laplace_mechanism_geo()
+			print  "Geo", self._laplaced_geo_posterior._alphas
+			self._accuracy[self._keys[1]].append(self._posterior - self._laplaced_geo_posterior)
+
+
+			
+		for key,item in self._accuracy.items():
+			self._accuracy_mean[key] = numpy.mean(item)
+
+
+#####################################################################################
+######PRINT FUNCTION TO SHOW THE PRARMETERS OF THE CLASS
+##################################################################################	
+	def _get_bias(self):
+		return self._bias
+
+	def _get_observation(self):
+		return self._observation
+
+	def _get_posterior(self):
+		return self._posterior
+
+
+	def _show_bias(self):
+		print "The bias generated from the prior distribution is: " + str(self._bias)
+
+	def _show_laplaced(self):
+		print "The posterior distribution under Laplace mechanism is: "
+		self._laplaced_posterior.show()
+
+
+	def _show_observation(self):
+		print "The observed data set is: "
+		print self._observation
+		print "The observed counting data is: "
+		print self._observation_counts
+
+	def _show_prior(self):
+		print "The prior distribution is: "
+		self._prior.show()
+
+	def _show_all(self):
+		self._show_prior()
+		self._show_bias()
+		self._show_observation()
+		self._show_laplaced()
+		self._show_exponential()
+
+\end{lstlisting}
+
+
+
+\begin{lstlisting}[label = code-p2-2a, language=Python, caption=Python Code for experimenting]
+
+
+#############################################################################
+#PLOT THE MEAN SAMPLING RESULTS IN SCATTER 
+#############################################################################
+
+
+def plot_mean_error(x,y_list,xstick,xlabel, ylabel, title):
+	plt.figure(figsize=(11,8))
+	i = 0	
+	for i in range(len(y_list)):
+		plt.plot(x, y_list[i],'o-',label=ylabel[i])
+
+	plt.xticks(x, xstick, rotation=70,fontsize=12)
+	plt.title(title,fontsize=20)
+	plt.xlabel(xlabel,fontsize=15)	
+	plt.ylabel('Average Hellinger Distance ',fontsize=15)
+	plt.grid()
+	plt.legend()
+	plt.show()
+
+#############################################################################
+#SAMPLING UNDER DIFFERENT DATASIZE 
+#############################################################################
+
+def accuracy_VS_datasize(epsilon,delta,prior,observations,datasizes):
+	data = []
+	mean_error = [[],[]]
+	for i in range(len(datasizes)):
+		observation = observations[i]
+		Bayesian_Model = BayesInferwithDirPrior(prior, sum(observation), epsilon, delta, 0.2)
+		Bayesian_Model._set_observation(observation)
+		print("start" + str(observation))
+		Bayesian_Model._experiments(1000)
+		print("finished" + str(observation))
+
+		for j in range(len(mean_error)):
+			mean_error[j].append(Bayesian_Model._accuracy_mean[Bayesian_Model._keys[j]])
+
+	print('Accuracy / prior: ' + str(prior._alphas) + ", delta: " 
+		+ str(delta) + ", epsilon:" + str(epsilon))
+
+
+	plot_mean_error(datasizes, mean_error, datasizes, 
+		"Different Datasizes", 
+		[r"$Laplace Noise$",
+		r"$Geomoetric Noise$"], "")
+	
+	return
+
+
+def accuracy_VS_datasize(epsilons,delta,prior,observation,datasize):
+	data = []
+	mean_error = [[],[]]
+	for e in epsilons:
+		Bayesian_Model = BayesInferwithDirPrior(prior, sum(observation), e, delta, 0.2)
+		Bayesian_Model._set_observation(observation)
+		print("start" + str(observation))
+		Bayesian_Model._experiments(1000)
+		print("finished" + str(observation))
+
+		for j in range(len(mean_error)):
+			mean_error[j].append(Bayesian_Model._accuracy_mean[Bayesian_Model._keys[j]])
+
+	plot_mean_error(epsilons, mean_error, [round(e, 2) for e in epsilons], 
+		"Different Datasizes", 
+		[r"$Laplace Noise$",
+		r"$Geomoetric Noise$"], "")
+	
+	return
+
+
+
+#############################################################################
+#GENERATING DATA SIZE AND CONRRESPONDING PARAMETER
+#############################################################################
+
+def gen_dataset(v, n):
+	return [int(n * i) for i in v]
+
+def gen_datasets(v, n_list):
+	return [gen_dataset(v,n) for n in n_list]
+
+def gen_datasizes(r, step):
+	return [(r[0] + i*step) for i in range(0,(r[1] - r[0])/step + 1)]
+
+def gen_priors(r, step, d):
+	return [dirichlet([step*i for j in range(d)]) for i in range(r[0]/step,r[1]/step + 1)]
+
+
+if __name__ == "__main__":
+
+#############################################################################
+#SETTING UP THE PARAMETERS
+#############################################################################
+
+	datasize = 20
+	epsilon = 0.1
+	delta = 0.00000001
+	prior = dirichlet([1,1])
+	data = [500,500]
+
+
+#############################################################################
+#SETTING UP THE PARAMETERS WHEN DOING GROUPS EXPERIMENTS
+#############################################################################
+	epsilons = list(numpy.arange(0.01, 0.1, 0.01)) + list(numpy.arange(0.1, 0.5, 0.05))
+	datasizes = gen_datasizes((10,50),10) + gen_datasizes((100,500),100) + gen_datasizes((600,1000),200)# + gen_datasizes((1000,5000),1000)#[300] #[8,12,18,24,30,36,42,44,46,48]#,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80]
+	percentage = [0.5,0.5]
+	datasets = gen_datasets(percentage, datasizes)
+	
+#############################################################################
+#DOING PLOTS OF ACCURACY V.S. THE DATA SIZE
+#############################################################################
+	
+	accuracy_VS_datasize(epsilons,delta,prior,data,1000
+
+\end{lstlisting}
+
+

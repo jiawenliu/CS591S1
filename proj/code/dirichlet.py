@@ -32,62 +32,6 @@ def opt_hellinger(dirichlet1, dirichlet2):
 def L1_Nrom(A, B):
 	return numpy.sum(abs(numpy.array(A._alphas) - numpy.array(B._alphas)))
 
-# def multibeta_function(alphas):
-# 	numerator = 1.0
-# 	denominator = 0.0
-# 	for alpha in alphas:
-# 		numerator = numerator * math.gamma(alpha)
-# 		denominator = denominator + alpha
-# 	# print numerator / math.gamma(denominator)
-# 	return numerator / math.gamma(denominator)
-
-# def optimized_multibeta_function(alphas):
-# 	denominator = -1.0
-# 	nominators = []
-# 	denominators = []
-# 	r = 1.0
-# 	for alpha in alphas:
-# 		denominator = denominator + alpha
-# 	for alpha in alphas:
-# 		# print alpha
-# 		temp = alpha - 1
-# 		while temp > 0.0:
-# 			nominators.append(temp)
-# 			temp -=1.0
-		
-# 		if temp < 0.0 and temp > -1.0:
-# 			#print temp
-# 			nominators.append(math.gamma(1 + temp))
-# 	while denominator > 0.0:
-# 		denominators.append(denominator)
-# 		denominator -= 1.0
-# 	if denominator < 0.0 and denominator > -1.0:
-# 		denominators.append(math.gamma(1.0 + denominator))
-
-# 	denominators.sort()
-# 	nominators.sort()
-# 	# print nominators
-# 	# print denominators
-# 	d_pointer = len(denominators) - 1
-# 	n_pointer = len(nominators) - 1
-# 	while d_pointer >= 0 and n_pointer >= 0:
-# 		# print nominators[n_pointer],denominators[d_pointer]
-# 		r *= nominators[n_pointer] / denominators[d_pointer]
-# 		n_pointer -= 1
-# 		d_pointer -= 1
-# 	while d_pointer >= 0:
-# 		# print n_pointer,denominators[d_pointer]
-# 		r *= 1.0 / denominators[d_pointer]
-# 		d_pointer -= 1
-# 	while n_pointer >= 0:
-# 		# print nominators[n_pointer] ,d_pointer
-# 		r *= nominators[n_pointer] 
-# 		n_pointer -= 1
-# 	return r
-
-
-
-
 
 class dirichlet(object):
 	def __init__(self, alphas):
