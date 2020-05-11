@@ -349,7 +349,7 @@ as a solution to a linear program (LP) as following. It is further proved by Lem
 %
 \begin{lem}[\cite{ghosh2012universally}]
 \label{lem:LP_opt}
-Every user-specific LP (reduced from mechanisms determination as above) has an optimal solution that is a vertex.
+Every user-specific LP (reduced from mechanisms determination problem as above) has an optimal solution that is a vertex.
 \end{lem}
 
 \subsection{InverseGamma-Gaussian Model
@@ -393,6 +393,13 @@ $a_n = a_0 + \frac{1}{2}n$;
 $b_n = b_0 + \frac{1}{2}(\datay^T\datay 
 + \vmu_0^{T}\vLambda_0 \vmu_0
 - \vmu_n^{T}\vLambda_n \vmu_n)$.
+
+The distribution of $\dataX$
+is obtained in three ways in this paper:
+1) By assigning specific prior manually in certain models;
+2) By sampling and estimating the population moments.
+3) By marginalizing out the variables $\dataX$ and $\datay$ representing individuals and
+instead perform inference directly over the latent sufficient statistics $s$.
 \end{defn}
 
 \begin{defn}{Sufficient Statistics}
@@ -418,7 +425,8 @@ The utility is measured as closeness to the non-private posterior, by maximum me
 	(k(p_i, p_j ) + k(q_i, q_j ) 
 	- k(p_i, q_j ) - k(p_j , q_i)),
 \]
-where $k$ is a standard normal kernel in this paper.
+where $k$ is a standard normal kernel in this paper 
+($k(p, q ) = e^{-\frac{1}{2\pi}||p - q||^2}$).
 \end{defn}
 %
 %
@@ -562,7 +570,7 @@ formalized into the counting querying model, we need to shown following mapping:
 	\Delta \alpha : \#\{i |x_i = 1\}
 	& \Rightarrow &
 	f:\{0, 1\}^d \rightarrow [N] \mbox{: the counting query}\\
-	\lfloor \lap(2/\epsilon, 0) \rfloor_0^{n}
+	\lfloor \lap{2/\epsilon}{0} \rfloor_0^{n}
 	& ? &
 	geo(\epsilon) \mbox{: the geometric mechanism}\\
 	beta(\alpha, \beta)
